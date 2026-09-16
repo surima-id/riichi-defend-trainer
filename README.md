@@ -215,6 +215,20 @@ npm test         # 65 unit tests
 npm run build    # typecheck + production build
 ```
 
+## Analytics
+
+Vercel Web Analytics, mounted at the root in `src/main.tsx`. It is
+cookie-less and collects no personally identifying information, which suits a
+drill that has no accounts and stores nothing about the player.
+
+The script is served from `/_vercel/insights/script.js`, a route the platform
+injects at deploy time. Off Vercel that path simply 404s and the component
+does nothing, so `npm run dev`, `npm run preview` and the test run are
+unaffected.
+
+Enable it under the project's Analytics tab in the Vercel dashboard — without
+that, the script loads but no data is recorded.
+
 ## Data licensing
 
 Tenhou publishes terms governing use of its 牌譜, including restrictions on
