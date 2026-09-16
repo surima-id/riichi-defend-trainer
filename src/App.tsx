@@ -499,14 +499,17 @@ export default function App() {
       </div>
 
       <p className="mt-5 text-sm leading-relaxed text-white/45">
-        <b>Bright</b> tiles with a <b className="text-sky-300">blue bar</b> were
-        tedashi — they came out of the hand, so the shape changed. <b>Greyed</b>,
-        unmarked tiles were tsumogiri (cut straight from the draw), which say
-        nothing about the hand. A <b className="text-rose-500">red outline</b>{' '}
-        marks an akadora five. A sideways tile is the riichi declaration; a
-        small, knocked-back tile was called away by another player. Positions are
-        real Tenhou Houou games; waits are computed from the hand the log
-        records.
+        A <b className="text-gold-300">gold ring</b> marks the tile just
+        discarded — the cut that poses this puzzle. <b>Bright</b> tiles with a{' '}
+        <b className="text-sky-300">blue bar</b> were tedashi — they came out of
+        the hand, so the shape changed. <b>Greyed</b>, unmarked tiles were
+        tsumogiri (cut straight from the draw), which say nothing about the
+        hand. A <b className="text-rose-500">red outline</b> marks an akadora
+        five. A sideways tile is the riichi declaration, and the white{' '}
+        <b>tenbou stick</b> in front of a pond means that seat has declared. A{' '}
+        <b className="text-amber-500">wind badge</b> (東/南/西/北) marks a tile
+        called away, naming the seat that took it. Positions are real Tenhou
+        Houou games; waits are computed from the hand the log records.
       </p>
     </Shell>
   )
