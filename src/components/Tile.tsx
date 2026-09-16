@@ -128,7 +128,11 @@ export function Tile({
         // purpose, and clipping at the root would cut it in half. The art
         // layer clips itself instead, which is all the rounding was for.
         'relative shrink-0 rounded-[3px] bg-transparent p-0 transition',
-        facedown ? 'border border-emerald-900/40 bg-emerald-800' : '',
+        // A face-down tile is a real tile, so it has to read as one against
+        // the felt. The old dark emerald sat at almost the mat's own
+        // lightness, which made the outer tiles of an ankan nearly vanish --
+        // exactly the meld where knowing a tile is there matters.
+        facedown ? 'border border-gold-300/35 bg-felt-950' : '',
         selected ? 'outline outline-2 outline-offset-1 outline-sky-500' : '',
         // The newest discard. An outline rather than a filter or a badge:
         // the tile already spends its art on tedashi/tsumogiri and its corner
@@ -140,6 +144,21 @@ export function Tile({
         className,
       ].join(' ')}
     >
+      {/* The Surima emblem, gold on a dark back. Drawn as a background image
+          rather than an <img> so it scales with the tile and needs no layout
+          of its own; inset so the mark sits clear of the tile's border. */}
+      {facedown && (
+        <span
+          aria-hidden
+          className="absolute inset-0 bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url(/tile-back.png)',
+            backgroundSize: '72%',
+            opacity: 0.92,
+          }}
+        />
+      )}
+
       {!facedown && (
         <span
           aria-hidden

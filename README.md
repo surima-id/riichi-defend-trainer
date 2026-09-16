@@ -83,6 +83,14 @@ This is possible because the log records everything — the replay is
 reconstructed, not inferred. Packed as deltas (first hand in full, then the
 tile that entered each turn), it costs ~800 B per puzzle instead of ~2 KB.
 
+Face-down tiles (the outer pair of a concealed kan) carry the Surima emblem in
+gold on a near-black back, built by `tools/build_tile_back.py`. The back used
+to be dark emerald, which sat at almost the felt's own lightness and made an
+ankan's hidden tiles nearly disappear — the one meld where seeing that a tile
+is *there* is the whole point. The emblem is cropped just inside the ring of
+script around its edge: that ring is illegible at 34px, and the artwork leaves
+a clean gap at r≈0.68 to cut on.
+
 Tile art is packed into a single sprite sheet by `tools/build_sprite.py` from
 `surima/assets/sample-tiles/cropped`. A 64-colour palette is visually lossless
 on this art and takes the sheet from ~316 KB to ~52 KB. Note that haku (白) is
@@ -115,6 +123,7 @@ tools/
   yaku.py            does a complete hand hold a yaku? (keishiki tenpai check)
   extract.py         replays mjai logs -> data/puzzles.jsonl
   build_sprite.py    packs tile art -> public/tiles.png
+  build_tile_back.py Surima emblem -> public/tile-back.png (face-down tiles)
   validate.py        cross-checks the solver against real game outcomes
   build_web_data.py  packs jsonl -> public/puzzles.json
 src/
