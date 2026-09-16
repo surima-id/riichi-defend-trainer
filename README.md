@@ -16,6 +16,7 @@ This is the whole point of the drill, so the river renders it literally:
 | **Greyed** | **Tedashi** — came out of the hand. The shape changed; this is information. |
 | Turned sideways, wider slot | The riichi declaration tile. |
 | Sideways tile inside a meld | The called tile — its position shows which seat it came from. |
+| Gold ring | The tile that was **just discarded** — the cut that poses the puzzle. The snapshot is taken immediately after the seat being read discards, so their last river tile is the newest thing on the table, and in a full pond it is otherwise indistinguishable from the other fifteen. |
 | Wind badge in the corner (東/南/西/北) | Called away — the badge names *which seat* took it. A plain mark could not tell two identical tiles apart when different players called each one, which is exactly when a pond is hardest to read. Nothing else about the tile changes, so a called tedashi looks like any other tedashi; dimming or shrinking it conflated being claimed with being cut from the draw. The badge counter-rotates so its kanji stay upright in every pond, as the nameplates do. |
 
 ## The table

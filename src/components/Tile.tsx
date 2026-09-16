@@ -37,6 +37,11 @@ interface TileProps {
   /** Face-down, for the outer tiles of an ankan. */
   facedown?: boolean
   /**
+   * The most recent discard on the table — drawn with a ring so it can be
+   * picked out of a full pond at a glance.
+   */
+  latest?: boolean
+  /**
    * Degrees to turn the caller badge so it stays upright.
    *
    * Each pond is rotated to face its own seat, which is right for the tiles
@@ -74,6 +79,7 @@ export function Tile({
   selected = false,
   rotated = false,
   facedown = false,
+  latest = false,
   uprightDeg = 0,
   onClick,
   title,
@@ -110,7 +116,13 @@ export function Tile({
       title={title ?? tileLabel(pai)}
       aria-label={tileLabel(pai)}
       aria-pressed={interactive ? selected : undefined}
-      style={{ width: w, height: h, ...(calledBy ? { zIndex: 1 } : {}) }}
+      style={{
+        width: w,
+        height: h,
+        // Both the ring and the badge overhang the tile, so either has to
+        // outrank the neighbours that paint after it.
+        ...(calledBy || latest ? { zIndex: 1 } : {}),
+      }}
       className={[
         // No `overflow-hidden` here: the claim mark overhangs the corner on
         // purpose, and clipping at the root would cut it in half. The art
@@ -118,6 +130,11 @@ export function Tile({
         'relative shrink-0 rounded-[3px] bg-transparent p-0 transition',
         facedown ? 'border border-emerald-900/40 bg-emerald-800' : '',
         selected ? 'outline outline-2 outline-offset-1 outline-sky-500' : '',
+        // The newest discard. An outline rather than a filter or a badge:
+        // the tile already spends its art on tedashi/tsumogiri and its corner
+        // on the caller badge, and a ring sits outside both without competing
+        // with either. Gold matches the highlight on the seat being read.
+        latest ? 'outline outline-2 outline-offset-1 outline-gold-300' : '',
         rotated ? 'rotate-90' : '',
         interactive ? 'cursor-pointer hover:-translate-y-0.5' : '',
         className,

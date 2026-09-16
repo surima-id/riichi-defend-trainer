@@ -63,6 +63,11 @@ export function Pond({ seat, uprightDeg = 0 }: {
   uprightDeg?: number
 }) {
   const rows = chunk(seat.river, ROW_LENGTH)
+  // The puzzle is snapshotted immediately after the seat being read discards,
+  // so the last tile of *their* river is the one that just hit the table --
+  // the tile that poses the question. It is the newest information the reader
+  // has and the hardest to pick out of a full pond, so it is marked.
+  const latest = seat.isTarget ? seat.river.length - 1 : -1
 
   return (
     <div
@@ -75,7 +80,12 @@ export function Pond({ seat, uprightDeg = 0 }: {
         rows.map((row, r) => (
           <div key={r} className="flex items-end self-start" style={{ gap: GAP }}>
             {row.map((t, i) => (
-              <PondTile key={i} tile={t} uprightDeg={uprightDeg} />
+              <PondTile
+                key={i}
+                tile={t}
+                uprightDeg={uprightDeg}
+                latest={r * ROW_LENGTH + i === latest}
+              />
             ))}
           </div>
         ))
@@ -286,14 +296,17 @@ export function Nameplate({
   )
 }
 
-function PondTile({ tile, uprightDeg = 0 }: {
+function PondTile({ tile, uprightDeg = 0, latest = false }: {
   tile: RiverTile
   uprightDeg?: number
+  /** The tile just discarded — the one that poses the puzzle. */
+  latest?: boolean
 }) {
   const title = [
     tile.pai,
     tile.tsumogiri ? 'tsumogiri (cut from draw)' : 'TEDASHI (from hand)',
     tile.riichi ? '— riichi declaration' : '',
+    latest ? '— JUST DISCARDED' : '',
     tile.calledBy ? `— called by ${WIND_NAME[tile.calledBy] ?? tile.calledBy}` : '',
   ]
     .filter(Boolean)
@@ -310,6 +323,7 @@ function PondTile({ tile, uprightDeg = 0 }: {
       // The riichi tile is itself turned 90deg, so its badge needs that
       // undone too on top of the pond's own rotation.
       uprightDeg={uprightDeg - (tile.riichi ? 90 : 0)}
+      latest={latest}
       title={title}
     />
   )
