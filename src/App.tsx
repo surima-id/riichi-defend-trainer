@@ -3,7 +3,9 @@ import { HandReplay } from './components/HandReplay'
 import { Table } from './components/Table'
 import { Tile } from './components/Tile'
 import { TileSelector } from './components/TileSelector'
-import { scoreGuess, scoreSafeGuess, type Mode, type Score } from './lib/scoring'
+import {
+  DEAL_IN_PENALTY, scoreGuess, scoreSafeGuess, type Mode, type Score,
+} from './lib/scoring'
 import { normalize, sortTiles } from './lib/tiles'
 import { unpackAll, type PackedPuzzle } from './lib/unpack'
 import type { Pai, Puzzle } from './lib/types'
@@ -179,6 +181,10 @@ export default function App() {
     })
   }, [puzzle, result, revealed, selected, mode])
 
+  const resetStats = useCallback(() => {
+    setStats(EMPTY_STATS)
+  }, [])
+
   const reveal = useCallback(() => {
     if (!puzzle || result || revealed) return
     setRevealed(true)
@@ -288,12 +294,24 @@ export default function App() {
           Readable hands only
         </label>
 
-        <dl className="flex gap-5 text-sm text-white/70">
-          <Stat label="Solved" value={`${stats.exact}/${stats.answered}`} />
-          <Stat label="Exact" value={`${accuracy}%`} />
-          <Stat label="Points" value={String(stats.points)} />
-          <Stat label="Streak" value={`${stats.streak} (best ${stats.bestStreak})`} />
-        </dl>
+        <div className="flex items-center gap-4">
+          <dl className="flex gap-5 text-sm text-white/70">
+            <Stat label="Solved" value={`${stats.exact}/${stats.answered}`} />
+            <Stat label="Exact" value={`${accuracy}%`} />
+            <Stat label="Points" value={String(stats.points)} />
+            <Stat label="Streak" value={`${stats.streak} (best ${stats.bestStreak})`} />
+          </dl>
+          {stats.answered > 0 && (
+            <button
+              type="button"
+              onClick={resetStats}
+              title="Clear the scoreboard and start a fresh session. The current hand is kept."
+              className="rounded-md border border-white/15 px-2.5 py-1 text-xs font-medium text-white/50 transition hover:border-white/30 hover:bg-white/10 hover:text-white"
+            >
+              Reset score
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="mb-3 text-sm text-white/65">
@@ -356,9 +374,17 @@ export default function App() {
                     ? 'Dealt in.'
                     : 'Not quite.'}
               </b>
-              <span>+{result.points} pts</span>
+              <span>
+                {result.points >= 0 ? '+' : ''}
+                {result.points} pts
+              </span>
+              {/* Say what the score was built from in the drill's own terms.
+                  "5 of 8 safe tiles" is something a player can act on; the F1
+                  this used to print is not. */}
               <span className="text-xs opacity-75">
-                (F1 {result.f1.toFixed(2)})
+                {mode === 'safe'
+                  ? `${result.hits.length} of ${result.hits.length + result.missed.length} safe tiles`
+                  : `${result.hits.length} of ${result.hits.length + result.missed.length} waits`}
               </span>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -388,6 +414,15 @@ export default function App() {
               <p className="mt-1 text-xs">
                 {mode === 'safe' ? 'Deals in: ' : 'Not waits: '}
                 {sortTiles(result.falsePositives).join(' ')}
+                {mode === 'safe' && (
+                  <>
+                    {' '}
+                    — {result.falsePositives.length > 1
+                      ? `${result.falsePositives.length} × −${DEAL_IN_PENALTY}`
+                      : `−${DEAL_IN_PENALTY}`}{' '}
+                    pts
+                  </>
+                )}
               </p>
             )}
           </div>

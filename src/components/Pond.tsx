@@ -102,9 +102,35 @@ export function PondMelds({ melds }: { melds: Meld[] }) {
   )
 }
 
-/** Where the sideways tile sits, by the seat the call was taken from. */
+/**
+ * Which tile in the set is laid sideways.
+ *
+ * The sideways tile carries two facts at once, and which one can be shown
+ * depends on the call.
+ *
+ * A chi is made of three *different* tiles, so rotating the wrong one states
+ * something false: a 3s4s5s taken on the 4s must rotate the middle tile, and
+ * laying the 3s sideways instead claims a tile that was never called. Identity
+ * wins, and nothing is lost by it — a chi may only be taken from kamicha, so
+ * the seat was never in question.
+ *
+ * A pon or kan is made of identical tiles, so no rotation can misname the
+ * called tile — any of them *is* the called tile. Here position is the only
+ * record of who fed the call, so the seat's conventional slot is used:
+ * leftmost for kamicha, middle for toimen, rightmost for shimocha.
+ */
 function rotatedIndex(meld: Meld): number {
   if (meld.type === 'ankan') return -1
+
+  // Chi: rotate the tile that was actually claimed.
+  if (meld.type === 'chi') {
+    if (meld.takenIndex >= 0 && meld.takenIndex < meld.tiles.length) {
+      return meld.takenIndex
+    }
+    return 0 // chi is always from kamicha
+  }
+
+  // Pon and kan: every tile is the same, so position carries the seat instead.
   const n = meld.tiles.length
   switch (meld.fromOffset) {
     case 3:

@@ -35,12 +35,21 @@ its unrotated footprint and the table would come out lopsided. The pond stays
 centred in its seat area whether or not that seat has melds, which is what
 keeps all four aligned around the centre box.
 
-Called melds show **which seat fed the call**, the way a real table does: the
-called tile is laid sideways, leftmost when taken from kamicha (your left),
-middle from toimen, rightmost from shimocha. It is the only visual record of
-who dealt into a call, so it is worth reading. (The data validates itself —
-every chi in the corpus comes from kamicha, which is the only seat you may
-chi from.)
+Called melds lay the called tile sideways, the way a real table does. Which
+tile gets rotated depends on the call, because the sideways tile carries two
+different facts:
+
+- A **chi** is three *different* tiles, so it rotates the tile that was
+  actually claimed — a 3s4s5s taken on the 4s rotates the middle tile.
+  Rotating by seat position instead would name a tile that was never called.
+  Nothing is lost, since a chi may only be taken from kamicha.
+- A **pon or kan** is identical tiles, so no choice can misname the called
+  tile. Position is then the only record of who fed the call, so the seat's
+  conventional slot is used: leftmost for kamicha (your left), middle for
+  toimen, rightmost for shimocha.
+
+(The data validates itself — every chi in the corpus comes from kamicha, which
+is the only seat you may chi from.)
 
 Tedashi is drawn as a greyscale filter rather than transparency: against the
 dark mat a transparent tile reads as *harder* to see than an opaque one, which
@@ -175,17 +184,25 @@ share of genuinely safe tiles found.
 
 ## Scoring
 
-Binary right/wrong would grade a three-sided wait the same as a tanki, so guesses
-are scored on set overlap: F1 between the selected and true wait sets, scaled to
-80 points, with 100 for an exact match. Red fives normalise — guessing `5m`
-covers `5mr`.
+Binary right/wrong would grade a three-sided wait the same as a tanki, so wait
+guesses are scored on set overlap: F1 between the selected and true wait sets,
+scaled to 80 points, with 100 for an exact match. Red fives normalise —
+guessing `5m` covers `5mr`.
+
+Safe-tile reading is scored differently, because its mistakes are asymmetric.
+The score is simply **the share of safe tiles found** — read two thirds of them
+and you score 67 — and each tile that deals in subtracts a flat **120**. The
+penalty exceeds the 100 a perfect read can earn, so a deal-in can never be
+offset by the safe tiles picked alongside it; at the table the hand is simply
+over. Scores can go negative, which is the point: guessing widely and hoping
+must cost more than passing on the tiles you cannot read.
 
 ## Running
 
 ```bash
 npm install
 npm run dev      # dev server
-npm test         # 49 unit tests
+npm test         # 56 unit tests
 npm run build    # typecheck + production build
 ```
 
