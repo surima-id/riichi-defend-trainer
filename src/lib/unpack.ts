@@ -32,6 +32,7 @@ export interface PackedPuzzle {
   y: number
   c?: number[]
   a: Pai[]
+  x?: Pai[]         // ron-able waits, absent when identical to `a`
   n: 0 | 1
   u: number
   z?: PackedStep[]
@@ -134,6 +135,7 @@ export function unpackPuzzle(p: PackedPuzzle, index: number): Puzzle {
       oya: p.y,
     },
     answer: p.a,
+    ronAnswer: p.x ?? p.a,
     kind: p.n === 1 ? 'riichi' : 'open',
     turn: p.u,
     gameId: String(index),

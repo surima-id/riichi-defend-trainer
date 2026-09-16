@@ -16,7 +16,7 @@ This is the whole point of the drill, so the river renders it literally:
 | **Greyed** | **Tedashi** — came out of the hand. The shape changed; this is information. |
 | Turned sideways, wider slot | The riichi declaration tile. |
 | Sideways tile inside a meld | The called tile — its position shows which seat it came from. |
-| Small and knocked back | Called away by another player. |
+| 🖐 in the corner | Called away by another player. Nothing else about the tile changes, so a called tedashi looks exactly like any other tedashi — being claimed and being cut from the draw are different facts, and dimming or shrinking the tile conflated them. |
 
 ## The table
 
@@ -94,6 +94,7 @@ not.)
 tools/
   mjtiles.py         tile notation helpers
   waits.py           win detection + wait enumeration (standard/chiitoi/kokushi)
+  yaku.py            does a complete hand hold a yaku? (keishiki tenpai check)
   extract.py         replays mjai logs -> data/puzzles.jsonl
   build_sprite.py    packs tile art -> public/tiles.png
   validate.py        cross-checks the solver against real game outcomes
@@ -131,6 +132,47 @@ the computed wait set. Current result: **7168 / 7171 (99.96%)**. The three
 misses are artifacts of the validator's own win-tile inference on chankan and
 multi-ron, not solver errors.
 
+The same pass validates the yaku test in the direction that matters. Every ron
+the server allowed must have held a yaku, so a ron our detector calls yakuless
+is a false negative — and false negatives are the dangerous direction, since
+they would mark a genuinely deadly tile safe. Over 2000 games: **5635 / 5648
+open-hand rons (99.77%)**, and every one of the 13 misses is a houtei, which is
+timing rather than shape and is deliberately out of scope.
+
+## Safe-tile reading
+
+The same ground truth read from the other side: you are shown your own hand and
+asked which tiles you could cut without dealing in.
+
+Two things make the answer narrower than "everything that is not a wait":
+
+**A yakuless hand cannot ron.** Players call hands into tenpai shapes with no
+yaku on purpose — keishiki tenpai, taken purely to collect the noten payments
+at an exhaustive draw. Such a hand's waits complete the shape arithmetically,
+but nobody can deal into them, so those tiles are not dangerous. `tools/yaku.py`
+answers the yes/no question "does this hand hold at least one yaku", and the
+extractor ships the ron-able subset of the wait set alongside the full one.
+Riichi is itself a yaku, so a declared hand's whole wait set stands. About 13%
+of open hands in the corpus have a wait that cannot be ronned, and ~5% cannot
+ron at all.
+
+Situational yaku (haitei, houtei, chankan, rinshan) depend on *when* the tile
+appears rather than on the hand, so they are not counted. That leaves one real
+gap: a houtei ron on the final discard can claim an otherwise yakuless hand.
+It is 0.23% of open-hand rons in the corpus, and it is the only case the drill
+calls safe when it is not.
+
+**Fully safe hands are kept.** Positions where nothing in hand deals in are
+part of the drill rather than filtered out of it. "Everything I hold passes" is
+a real read, and excluding those hands would train the opposite reflex — that a
+dangerous tile must be in there somewhere, so one must be found. Only hands
+with no safe tile at all are dropped, since they have no answer to give.
+
+Scoring is asymmetric, because the mistakes are. Passing over a safe tile costs
+a little tempo; naming a wait tile safe deals in. So one deal-in zeroes the
+score however many correct tiles were picked alongside it, and the rest is the
+share of genuinely safe tiles found.
+
 ## Scoring
 
 Binary right/wrong would grade a three-sided wait the same as a tanki, so guesses
@@ -143,7 +185,7 @@ covers `5mr`.
 ```bash
 npm install
 npm run dev      # dev server
-npm test         # 28 unit tests
+npm test         # 49 unit tests
 npm run build    # typecheck + production build
 ```
 

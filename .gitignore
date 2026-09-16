@@ -5,3 +5,6 @@ data/raw
 .vercel
 
 .vercel
+__pycache__/
+*.pyc
+tsconfig.tsbuildinfo

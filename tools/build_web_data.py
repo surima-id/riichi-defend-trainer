@@ -138,6 +138,9 @@ def main():
             "y": p["round"]["oya"],
             "c": p["round"]["scores"],
             "a": p["answer"],
+            # Only emitted when it differs from "a" -- i.e. keishiki tenpai,
+            # where some or all of the wait cannot be ronned for lack of a yaku.
+            **({"x": p["ronAnswer"]} if p.get("ronAnswer") != p["answer"] else {}),
             "n": 1 if p["kind"] == "riichi" else 0,
             "u": p["turn"],
             "z": pack_history(p["history"]),

@@ -38,3 +38,28 @@ describe('safe-tile scoring', () => {
     expect(scoreSafeGuess([], WAITS, HAND).exact).toBe(false)
   })
 })
+
+describe('a hand that cannot deal in', () => {
+  // Keishiki tenpai: the shape is tenpai but holds no yaku, so no tile in it
+  // can be ronned and the whole hand is safe to cut from.
+  const NO_RON: string[] = []
+
+  it('treats every tile as safe when nothing can be ronned', () => {
+    const s = scoreSafeGuess(HAND, NO_RON, HAND)
+    expect(s.exact).toBe(true)
+    expect(s.points).toBe(100)
+    expect(s.missed).toEqual([])
+  })
+
+  it('cannot deal in, so a tile that completes the shape is not punished', () => {
+    const s = scoreSafeGuess(['3m'], NO_RON, HAND)
+    expect(s.falsePositives).toEqual([])
+    expect(s.points).toBeGreaterThan(0)
+  })
+
+  it('still marks a cautious partial answer short of full marks', () => {
+    const s = scoreSafeGuess(['1m'], NO_RON, HAND)
+    expect(s.exact).toBe(false)
+    expect(s.points).toBeLessThan(100)
+  })
+})

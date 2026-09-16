@@ -19,6 +19,7 @@ import pyarrow.parquet as pq
 
 from mjtiles import normalize, sort_key
 from waits import waits_for
+from yaku import has_yaku
 
 WINDS = ["E", "S", "W", "N"]
 
@@ -131,7 +132,7 @@ def replay(events, want_open, rng, keep_prob):
                 continue
             if not declaring:
                 emitted_open.add(a)
-            yield _make_puzzle(players, a, meta, w, declaring)
+            yield _make_puzzle(players, a, meta, w, _ron_waits(p, w, meta, a), declaring)
 
         elif t in ("pon", "chi", "daiminkan"):
             a, tgt = e["actor"], e["target"]
@@ -180,7 +181,27 @@ def replay(events, want_open, rng, keep_prob):
             players = None
 
 
-def _make_puzzle(players, target, meta, waits, is_riichi):
+def _ron_waits(p, waits, meta, seat):
+    """The subset of `waits` that could actually be ronned.
+
+    A hand with no yaku cannot claim a discard. Players call hands into
+    yakuless shapes on purpose -- keishiki tenpai, taken to collect noten
+    payments at an exhaustive draw -- and nobody can deal into those, so their
+    "waits" are not dangerous tiles however completely they fill the hand.
+
+    Riichi is itself a yaku, so a declared hand's whole wait set stands.
+    """
+    if p.riichi:
+        return list(waits)
+    bakaze = meta["bakaze"]
+    seat_wind = WINDS[(seat - meta["oya"]) % 4]
+    return [
+        t for t in waits
+        if has_yaku(p.hand + [t], p.melds, bakaze, seat_wind, t)
+    ]
+
+
+def _make_puzzle(players, target, meta, waits, ron_waits, is_riichi):
     p = players[target]
     # The observer sits across from the target; that seat's own concealed hand
     # is information a real player at the table would have, so it is recorded.
@@ -221,6 +242,9 @@ def _make_puzzle(players, target, meta, waits, is_riichi):
             "oya": meta["oya"],
         },
         "answer": sorted(waits, key=sort_key),
+        # Waits that can actually be ronned; equal to "answer" unless the hand
+        # is keishiki tenpai, in which case it may be empty.
+        "ronAnswer": sorted(ron_waits, key=sort_key),
         "kind": "riichi" if is_riichi else "open",
         "turn": len(p.river),
         "history": _history(p),

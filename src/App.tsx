@@ -40,21 +40,40 @@ function discardable(p: Puzzle): Pai[] {
 }
 
 /**
- * Safe-tile reading needs a hand holding both a deal-in and a safe cut.
+ * The tiles that would actually deal in if cut.
  *
- * With nothing dangerous in hand the answer is "all of them" and no reading is
- * involved; the drill only teaches something when there is a real choice.
+ * Not every wait is a deal-in: a hand with no yaku cannot claim a discard, so
+ * its waits complete the shape without anyone being able to ron them. This is
+ * `ronAnswer` rather than `answer` throughout safe mode -- for a keishiki
+ * tenpai hand the honest answer is that the whole hand is safe.
+ */
+function dangerous(p: Puzzle): Set<Pai> {
+  return new Set(p.ronAnswer.map(normalize))
+}
+
+/**
+ * Safe-tile reading needs a hand with at least one tile that can be cut.
+ *
+ * Hands holding nothing dangerous are kept deliberately. "Everything in my
+ * hand passes" is a real and common read, and filtering those positions out
+ * would train the opposite reflex -- that a dangerous tile is always in there
+ * somewhere, so one must be found. The only hands excluded are the degenerate
+ * ones where every tile deals in and there is no safe answer to give.
  */
 function hasSafeChoice(p: Puzzle): boolean {
-  const waits = new Set(p.answer.map(normalize))
-  const hand = discardable(p)
-  return hand.some((t) => waits.has(t)) && hand.some((t) => !waits.has(t))
+  const waits = dangerous(p)
+  return discardable(p).some((t) => !waits.has(t))
 }
 
 /** The tiles in hand that are genuinely safe to cut — the answer in safe mode. */
 function safeTiles(p: Puzzle): Pai[] {
-  const waits = new Set(p.answer.map(normalize))
+  const waits = dangerous(p)
   return discardable(p).filter((t) => !waits.has(t))
+}
+
+/** A tenpai hand that cannot ron at all: every tile in hand is safe. */
+function isYakuless(p: Puzzle): boolean {
+  return p.ronAnswer.length === 0
 }
 
 /** Does this puzzle have enough information to be read rather than guessed? */
@@ -145,7 +164,7 @@ export default function App() {
     if (!puzzle || result || revealed || selected.length === 0) return
     const s =
       mode === 'safe'
-        ? scoreSafeGuess(selected, puzzle.answer, discardable(puzzle))
+        ? scoreSafeGuess(selected, puzzle.ronAnswer, discardable(puzzle))
         : scoreGuess(selected, puzzle.answer)
     setResult(s)
     setStats((prev) => {
@@ -350,6 +369,16 @@ export default function App() {
                 <Tile key={i} pai={p} size="sm" />
               ))}
             </div>
+            {mode === 'safe' && isYakuless(puzzle) && (
+              <p className="mt-1 text-xs opacity-90">
+                This hand has no yaku, so it cannot ron —{' '}
+                {puzzle.answer.length > 0
+                  ? `${sortTiles(puzzle.answer).join(' ')} completes the shape but nobody can deal in.`
+                  : 'nothing completes it for a ron.'}{' '}
+                Keishiki tenpai: called for the noten payments at a draw. Every
+                tile in your hand is safe.
+              </p>
+            )}
             {result.missed.length > 0 && (
               <p className="mt-1 text-xs">
                 Missed: {sortTiles(result.missed).join(' ')}
@@ -378,6 +407,16 @@ export default function App() {
                 <Tile key={i} pai={p} size="sm" />
               ))}
             </div>
+            {mode === 'safe' && isYakuless(puzzle) && (
+              <p className="mt-1 text-xs opacity-90">
+                This hand has no yaku, so it cannot ron —{' '}
+                {puzzle.answer.length > 0
+                  ? `${sortTiles(puzzle.answer).join(' ')} completes the shape but nobody can deal in.`
+                  : 'nothing completes it for a ron.'}{' '}
+                Keishiki tenpai: called for the noten payments at a draw. Every
+                tile in your hand is safe.
+              </p>
+            )}
           </div>
         )}
 

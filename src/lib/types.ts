@@ -59,6 +59,16 @@ export interface Puzzle {
   others: Seat[]
   round: RoundInfo
   answer: Pai[]
+  /**
+   * The subset of `answer` that can actually be ronned.
+   *
+   * A hand with no yaku cannot claim a discard, so its waits complete the
+   * shape without ever being dealt into. Players reach these shapes on purpose
+   * -- keishiki tenpai, called purely to collect noten payments at a draw --
+   * and for safety reading such tiles are not dangerous. Equal to `answer` for
+   * every riichi hand, since riichi is itself a yaku.
+   */
+  ronAnswer: Pai[]
   kind: 'riichi' | 'open'
   turn: number
   gameId: string
