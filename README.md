@@ -43,21 +43,21 @@ its unrotated footprint and the table would come out lopsided. The pond stays
 centred in its seat area whether or not that seat has melds, which is what
 keeps all four aligned around the centre box.
 
-Called melds lay the called tile sideways, the way a real table does. Which
-tile gets rotated depends on the call, because the sideways tile carries two
-different facts:
+Called melds lay the called tile sideways, the way a real table does. The
+claimed tile is **moved** into the slot that names the seat it came from —
+leftmost for kamicha (your left), middle for toimen, rightmost for shimocha —
+and turned there, with the other tiles closing up around it in sorted order.
 
-- A **chi** is three *different* tiles, so it rotates the tile that was
-  actually claimed — a 3s4s5s taken on the 4s rotates the middle tile.
-  Rotating by seat position instead would name a tile that was never called.
-  Nothing is lost, since a chi may only be taken from kamicha.
-- A **pon or kan** is identical tiles, so no choice can misname the called
-  tile. Position is then the only record of who fed the call, so the seat's
-  conventional slot is used: leftmost for kamicha (your left), middle for
-  toimen, rightmost for shimocha.
+Both facts then hold at once: the rotated tile *is* the tile that was claimed,
+and where it sits says who fed it. A chi of 3s4s5s taken on the 4s renders as
+`4s 3s 5s` with the 4s sideways at the left, not `3s 4s 5s` with the middle
+one turned. Leaving the set in sorted order and rotating in place gets one of
+the two facts wrong for roughly two thirds of calls, since the claimed tile
+lands wherever sorting happens to put it.
 
 (The data validates itself — every chi in the corpus comes from kamicha, which
-is the only seat you may chi from.)
+is the only seat you may chi from, and every meld's recorded source matches a
+tile in that seat's river.)
 
 Tedashi is drawn as a greyscale filter rather than transparency: against the
 dark mat a transparent tile reads as *harder* to see than an opaque one, which
@@ -210,7 +210,7 @@ must cost more than passing on the tiles you cannot read.
 ```bash
 npm install
 npm run dev      # dev server
-npm test         # 59 unit tests
+npm test         # 65 unit tests
 npm run build    # typecheck + production build
 ```
 

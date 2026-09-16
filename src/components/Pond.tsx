@@ -1,5 +1,5 @@
 import { Tile } from './Tile'
-import type { Meld, RiverTile } from '../lib/types'
+import type { Meld, Pai, RiverTile } from '../lib/types'
 
 /** Tenhou lays the pond out six tiles to a row; the last row runs long. */
 export const ROW_LENGTH = 6
@@ -112,49 +112,46 @@ export function PondMelds({ melds }: { melds: Meld[] }) {
 }
 
 /**
- * Which tile in the set is laid sideways.
+ * Lay out a called set the way a real table does.
  *
- * The sideways tile carries two facts at once, and which one can be shown
- * depends on the call.
+ * The called tile is not left where sorting happens to put it: it is *moved*
+ * to the slot that names the seat it came from — leftmost for kamicha (your
+ * left), middle for toimen, rightmost for shimocha — and laid sideways there.
+ * The remaining tiles keep their sorted order around it.
  *
- * A chi is made of three *different* tiles, so rotating the wrong one states
- * something false: a 3s4s5s taken on the 4s must rotate the middle tile, and
- * laying the 3s sideways instead claims a tile that was never called. Identity
- * wins, and nothing is lost by it — a chi may only be taken from kamicha, so
- * the seat was never in question.
+ * Both facts therefore hold at once, which is the point: the rotated tile is
+ * the tile that was actually claimed *and* its position says who fed it. A
+ * chi of 3s4s5s taken on the 4s reads "4s 3s 5s" with the 4s sideways at the
+ * left, not "3s 4s 5s" with the middle turned.
  *
- * A pon or kan is made of identical tiles, so no rotation can misname the
- * called tile — any of them *is* the called tile. Here position is the only
- * record of who fed the call, so the seat's conventional slot is used:
- * leftmost for kamicha, middle for toimen, rightmost for shimocha.
+ * Returns the display order plus the index that is laid sideways, so the
+ * caller does not have to recompute the mapping.
  */
-function rotatedIndex(meld: Meld): number {
-  if (meld.type === 'ankan') return -1
-
-  // Chi: rotate the tile that was actually claimed.
-  if (meld.type === 'chi') {
-    if (meld.takenIndex >= 0 && meld.takenIndex < meld.tiles.length) {
-      return meld.takenIndex
-    }
-    return 0 // chi is always from kamicha
+export function meldLayout(meld: Meld): { tiles: Pai[]; rotIndex: number } {
+  // A concealed kan was never called, so nothing rotates and the ends are the
+  // two tiles drawn face-down.
+  if (meld.type === 'ankan' || meld.fromOffset === 0) {
+    return { tiles: meld.tiles, rotIndex: -1 }
   }
 
-  // Pon and kan: every tile is the same, so position carries the seat instead.
   const n = meld.tiles.length
-  switch (meld.fromOffset) {
-    case 3:
-      return 0 // kamicha — leftmost
-    case 2:
-      return 1 // toimen — middle
-    case 1:
-      return n - 1 // shimocha — rightmost
-    default:
-      return -1
-  }
+  const slot =
+    meld.fromOffset === 3
+      ? 0                // kamicha — leftmost
+      : meld.fromOffset === 2
+        ? 1              // toimen — middle
+        : n - 1          // shimocha — rightmost
+
+  // Pull the claimed tile out and let the rest close up around its new slot.
+  const i =
+    meld.takenIndex >= 0 && meld.takenIndex < n ? meld.takenIndex : 0
+  const rest = meld.tiles.filter((_, k) => k !== i)
+  const tiles = [...rest.slice(0, slot), meld.tiles[i], ...rest.slice(slot)]
+  return { tiles, rotIndex: slot }
 }
 
 function MeldSet({ meld }: { meld: Meld }) {
-  const rotAt = rotatedIndex(meld)
+  const { tiles, rotIndex: rotAt } = meldLayout(meld)
   const label =
     meld.fromOffset === 3
       ? 'from kamicha (left)'
@@ -166,7 +163,7 @@ function MeldSet({ meld }: { meld: Meld }) {
 
   return (
     <div className="flex items-end gap-px" title={`${meld.type} — ${label}`}>
-      {meld.tiles.map((t, j) => {
+      {tiles.map((t, j) => {
         const sideways = j === rotAt
         const tile = (
           <Tile
