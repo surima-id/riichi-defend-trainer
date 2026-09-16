@@ -1,0 +1,11 @@
+# Vercel does not read .gitignore, so the build inputs are excluded here too.
+node_modules
+dist
+
+# Raw Tenhou logs: a ~283 MB parquet that only tools/extract.py reads, offline.
+# The deploy needs public/puzzles.json, which is already generated and committed.
+data
+
+tools
+*.local
+.git
