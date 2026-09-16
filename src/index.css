@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/**
+ * Design tokens, matching the Surima trainer (train.surima.id).
+ *
+ * The app is dark-only: `dark` is declared as an unconditional variant so the
+ * felt palette applies without a toggle or a media query.
+ */
+@theme {
+  /* Felt greens — the table the whole app sits on. */
+  --color-felt-50: #f2f7f4;
+  --color-felt-100: #dfeae3;
+  --color-felt-200: #c2d8cb;
+  --color-felt-300: #9bbfa9;
+  --color-felt-400: #6b9d80;
+  --color-felt-500: #43785b;
+  --color-felt-600: #2d5c43;
+  --color-felt-700: #1f4534;
+  --color-felt-800: #163527;
+  --color-felt-900: #0f261c;
+  --color-felt-950: #081711;
+
+  /* Gold accent, for the flourishes that carry the eye. */
+  --color-gold-300: #f3d68a;
+  --color-gold-400: #e8bf5c;
+  --color-gold-500: #d3a13a;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
+}
+
+@custom-variant dark (&);
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-felt-900);
+  color: #fff;
+  font-family: var(--font-sans);
+}
