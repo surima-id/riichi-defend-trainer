@@ -6,6 +6,8 @@ import {
   POND_H,
   POND_W,
   ROTATION,
+  RiichiStick,
+  STICK_H,
   type Orientation,
 } from './Pond'
 import { Tile } from './Tile'
@@ -289,6 +291,18 @@ function SeatBlock({
             centre, and it keeps the strip clear of the neighbouring seat's pond:
             swung inward it would reach across the corner into their discards. */}
         <div className="relative h-full" style={{ width: AREA_W }}>
+          {/* Laid across the band between this pond and the centre box --
+              the strip INSET already holds clear, and where a player would
+              actually push the stick. Inside the rotated block, so it faces
+              its own seat and lands in front of the right pond for all four. */}
+          {seat.riichi && (
+            <div
+              className="absolute left-1/2 -translate-x-1/2"
+              style={{ top: -(STICK_H + 7) }}
+            >
+              <RiichiStick />
+            </div>
+          )}
           <div
             className="absolute top-0"
             style={{ left: (AREA_W - POND_W) / 2 }}
@@ -317,7 +331,6 @@ function SeatBlock({
         <Nameplate
           wind={wind}
           score={score}
-          riichi={seat.riichi}
           isTarget={seat.isTarget}
           stacked={sideSeat}
         />

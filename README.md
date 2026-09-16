@@ -26,8 +26,16 @@ order and the sideways riichi tile read correctly from that seat, exactly as
 they would in game. The seat you are reading always sits at the bottom (the
 "self" position), with the other three in real relative seating: shimocha
 right, toimen top, kamicha left. Each seat's called melds sit beside its pond
-and rotate with it. Only the nameplates stay upright, since upside-down text
-is simply hard to read.
+and rotate with it. Only the nameplates and the caller badges stay upright,
+since upside-down text is simply hard to read.
+
+A riichi declaration is shown the way a real table shows it: the declarer's
+1000-point **tenbou stick** is laid in the band between their pond and the
+centre box, where a player would actually push it. It rides inside the rotated
+seat block, so it lands in front of the right pond and along the right axis for
+all four seats. That band is reserved by `INSET` and otherwise empty, so the
+stick costs no space — and it reads from across the table in a way the small
+"riichi" label beside the nameplate did not.
 
 Ponds are absolutely positioned rather than laid out in a grid: a CSS rotation
 does not affect layout, so a rotated block in normal flow would still reserve

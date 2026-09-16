@@ -192,21 +192,49 @@ function MeldSet({ meld }: { meld: Meld }) {
 }
 
 /**
- * The seat's wind, score and riichi state.
+ * A 1000-point riichi stick, laid in front of its owner's pond.
+ *
+ * This is how a real table announces a riichi: the declarer pushes a tenbou
+ * out in front of their discards and it stays there for the rest of the hand.
+ * It reads at a glance from across the table, which a text label beside the
+ * nameplate never quite does, and the band between the ponds and the centre
+ * box is empty anyway.
+ *
+ * Drawn rather than photographed: a white bar with the single red spot that
+ * distinguishes the 1000-point stick from the other denominations.
+ */
+export const STICK_W = POND_W * 0.62
+export const STICK_H = 9
+
+export function RiichiStick() {
+  return (
+    <div
+      className="flex items-center justify-center rounded-[2px] bg-gradient-to-b from-white to-white/80 shadow-[0_1px_3px_rgba(0,0,0,.55)] ring-1 ring-black/25"
+      style={{ width: STICK_W, height: STICK_H }}
+      title="Riichi declared — 1000 point stick"
+    >
+      {/* The lone red dot is the 1000-point stick's own marking. */}
+      <span className="h-[3px] w-[3px] rounded-full bg-rose-500" />
+    </div>
+  )
+}
+
+/**
+ * The seat's wind and score.
  *
  * Kept upright regardless of which seat it belongs to — a rotated pond is how
- * a real table looks, but upside-down *text* is just hard to read.
+ * a real table looks, but upside-down *text* is just hard to read. Riichi is
+ * not shown here: the stick in front of the pond says it, the way a real
+ * table does.
  */
 export function Nameplate({
   wind,
   score,
-  riichi,
   isTarget,
   stacked = false,
 }: {
   wind: string
   score?: number
-  riichi: boolean
   isTarget: boolean
   /**
    * Stack the wind over the score instead of setting them side by side.
@@ -237,11 +265,6 @@ export function Nameplate({
             {score}
           </span>
         )}
-        {riichi && (
-          <span className="rounded bg-rose-500/90 px-1 text-[8px] font-bold uppercase leading-tight tracking-wide text-white">
-            riichi
-          </span>
-        )}
       </div>
     )
   }
@@ -261,11 +284,6 @@ export function Nameplate({
       </span>
       {score !== undefined && (
         <span className="text-sm tabular-nums text-white/75">{score}</span>
-      )}
-      {riichi && (
-        <span className="rounded bg-rose-500/90 px-1 py-px text-[9px] font-bold uppercase leading-tight tracking-wide text-white">
-          riichi
-        </span>
       )}
     </div>
   )
