@@ -7,7 +7,7 @@ single string token so the shipped file stays small enough to load eagerly:
     "4s"     tsumogiri
     "-4s"    tedashi   (leading '-')
     "*4s"    riichi declaration tile
-    "!4s"    called by another player
+    "!E4s"   called away, by the player whose seat wind follows the '!'
 
 Seats carry "h" only for the observer, whose own hand they can see.
 
@@ -21,7 +21,10 @@ SRC = Path("data/puzzles.jsonl")
 OUT = Path("public/puzzles.json")
 
 
-def pack_river(river):
+WINDS = ["E", "S", "W", "N"]
+
+
+def pack_river(river, oya):
     out = []
     for t in river:
         prefix = ""
@@ -29,8 +32,11 @@ def pack_river(river):
             prefix += "-"
         if t["riichi"]:
             prefix += "*"
-        if t["called"]:
-            prefix += "!"
+        if t.get("calledBy") is not None:
+            # The caller's seat wind, not their absolute seat: the wind is what
+            # the table shows, so it survives without the reader having to know
+            # who was dealer that hand.
+            prefix += "!" + WINDS[(t["calledBy"] - oya) % 4]
         out.append(prefix + t["pai"])
     return out
 
@@ -110,8 +116,8 @@ def _diff(a, b):
     return out
 
 
-def pack_seat(s):
-    d = {"s": s["seat"], "r": pack_river(s["river"])}
+def pack_seat(s, oya):
+    d = {"s": s["seat"], "r": pack_river(s["river"], oya)}
     if s["melds"]:
         d["m"] = pack_melds(s["melds"], s["seat"])
     if s["riichi"]:
@@ -129,8 +135,8 @@ def main():
     for p in rows:
         t = p["target"]
         packed.append({
-            "t": pack_seat(t),
-            "o": [pack_seat(o) for o in p["others"]],
+            "t": pack_seat(t, p["round"]["oya"]),
+            "o": [pack_seat(o, p["round"]["oya"]) for o in p["others"]],
             "b": p["round"]["bakaze"],
             "k": p["round"]["kyoku"],
             "h": p["round"]["honba"],

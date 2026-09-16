@@ -6,8 +6,14 @@ export interface RiverTile {
   tsumogiri: boolean
   /** True on the riichi declaration tile. */
   riichi: boolean
-  /** True when another player called this tile. */
-  called: boolean
+  /**
+   * Seat wind of the player who called this tile away, or null.
+   *
+   * The wind rather than a flag: two players can call the same tile face, and
+   * a bare "this was called" leaves the reader unable to tell which meld it
+   * went into.
+   */
+  calledBy: string | null
 }
 
 export interface Meld {

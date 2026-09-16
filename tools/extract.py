@@ -27,7 +27,7 @@ WINDS = ["E", "S", "W", "N"]
 class Player:
     def __init__(self, tehai):
         self.hand = list(tehai)          # concealed tiles
-        self.river = []                  # {pai, tsumogiri, riichi, called}
+        self.river = []                  # {pai, tsumogiri, riichi, calledBy}
         self.melds = []                  # {type, tiles, from, taken}
         self.riichi = False
         self.riichi_turn = None
@@ -110,7 +110,11 @@ def replay(events, want_open, rng, keep_prob):
                 "pai": e["pai"],
                 "tsumogiri": bool(e.get("tsumogiri", False)),
                 "riichi": declaring,
-                "called": False,
+                # Absolute seat of whoever called this tile away, or None.
+                # The seat rather than a flag: two players can call the same
+                # tile face on the same turn, and "which of you took it" is
+                # exactly what the reader needs to disentangle them.
+                "calledBy": None,
             })
             if declaring:
                 p.riichi = True
@@ -147,7 +151,7 @@ def replay(events, want_open, rng, keep_prob):
                 "taken": e["pai"],
             })
             if players[tgt].river:
-                players[tgt].river[-1]["called"] = True
+                players[tgt].river[-1]["calledBy"] = a
 
         elif t == "ankan":
             a = e["actor"]

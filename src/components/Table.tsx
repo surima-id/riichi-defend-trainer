@@ -293,7 +293,9 @@ function SeatBlock({
             className="absolute top-0"
             style={{ left: (AREA_W - POND_W) / 2 }}
           >
-            <Pond seat={seat} />
+            {/* Undo this seat's rotation for the caller badges only, so
+                their kanji read upright the way the nameplates do. */}
+            <Pond seat={seat} uprightDeg={-deg} />
           </div>
           {/* Melds sit past the pond's outer corner: out along the seat's own
               axis (bottom, the table's edge) and out across it (beyond the

@@ -4,7 +4,7 @@ import { unpackPuzzle, unpackRiverTile, type PackedPuzzle } from '../lib/unpack'
 describe('unpackRiverTile', () => {
   it('treats a bare token as tsumogiri', () => {
     expect(unpackRiverTile('4s')).toEqual({
-      pai: '4s', tsumogiri: true, riichi: false, called: false,
+      pai: '4s', tsumogiri: true, riichi: false, calledBy: null,
     })
   })
 
@@ -15,8 +15,27 @@ describe('unpackRiverTile', () => {
   })
 
   it('reads combined flags in any order', () => {
-    const t = unpackRiverTile('-*!4s')
-    expect(t).toEqual({ pai: '4s', tsumogiri: false, riichi: true, called: true })
+    const t = unpackRiverTile('-*!S4s')
+    expect(t).toEqual({
+      pai: '4s', tsumogiri: false, riichi: true, calledBy: 'S',
+    })
+  })
+
+  it('names the seat that called the tile away', () => {
+    expect(unpackRiverTile('!E4s').calledBy).toBe('E')
+    expect(unpackRiverTile('!N4s').calledBy).toBe('N')
+  })
+
+  it('consumes the wind letter rather than reading it as the tile', () => {
+    // '!' is the one flag carrying a payload; its letter must not survive into
+    // the tile name, or an uncalled 'W' and a west-called tile would collide.
+    const t = unpackRiverTile('-!W5p')
+    expect(t.pai).toBe('5p')
+    expect(t.calledBy).toBe('W')
+  })
+
+  it('leaves an uncalled tile with no caller', () => {
+    expect(unpackRiverTile('-4s').calledBy).toBeNull()
   })
 
   it('preserves red fives and honors', () => {

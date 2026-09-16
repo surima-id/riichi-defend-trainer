@@ -16,7 +16,7 @@ This is the whole point of the drill, so the river renders it literally:
 | **Greyed** | **Tedashi** — came out of the hand. The shape changed; this is information. |
 | Turned sideways, wider slot | The riichi declaration tile. |
 | Sideways tile inside a meld | The called tile — its position shows which seat it came from. |
-| 🖐 in the corner | Called away by another player. Nothing else about the tile changes, so a called tedashi looks exactly like any other tedashi — being claimed and being cut from the draw are different facts, and dimming or shrinking the tile conflated them. |
+| Wind badge in the corner (東/南/西/北) | Called away — the badge names *which seat* took it. A plain mark could not tell two identical tiles apart when different players called each one, which is exactly when a pond is hardest to read. Nothing else about the tile changes, so a called tedashi looks like any other tedashi; dimming or shrinking it conflated being claimed with being cut from the draw. The badge counter-rotates so its kanji stay upright in every pond, as the nameplates do. |
 
 ## The table
 
@@ -202,7 +202,7 @@ must cost more than passing on the tiles you cannot read.
 ```bash
 npm install
 npm run dev      # dev server
-npm test         # 56 unit tests
+npm test         # 59 unit tests
 npm run build    # typecheck + production build
 ```
 

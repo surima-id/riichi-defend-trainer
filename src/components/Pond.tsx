@@ -16,6 +16,11 @@ export const POND_H = 3 * (TILE_H + GAP)
 
 const WIND_KANJI: Record<string, string> = { E: '東', S: '南', W: '西', N: '北' }
 
+/** Spelled out for the tooltip, where a lone kanji is less help than a word. */
+const WIND_NAME: Record<string, string> = {
+  E: 'East (東)', S: 'South (南)', W: 'West (西)', N: 'North (北)',
+}
+
 export type Orientation = 'bottom' | 'right' | 'top' | 'left'
 
 /**
@@ -52,7 +57,11 @@ function chunk<T>(xs: T[], n: number): T[][] {
  * keeps the riichi tile's sideways orientation and the fill order correct
  * from the owner's point of view once rotated.
  */
-export function Pond({ seat }: { seat: PondSeat }) {
+export function Pond({ seat, uprightDeg = 0 }: {
+  seat: PondSeat
+  /** Inverse of this pond's rotation, so caller badges stay readable. */
+  uprightDeg?: number
+}) {
   const rows = chunk(seat.river, ROW_LENGTH)
 
   return (
@@ -66,7 +75,7 @@ export function Pond({ seat }: { seat: PondSeat }) {
         rows.map((row, r) => (
           <div key={r} className="flex items-end self-start" style={{ gap: GAP }}>
             {row.map((t, i) => (
-              <PondTile key={i} tile={t} />
+              <PondTile key={i} tile={t} uprightDeg={uprightDeg} />
             ))}
           </div>
         ))
@@ -262,12 +271,15 @@ export function Nameplate({
   )
 }
 
-function PondTile({ tile }: { tile: RiverTile }) {
+function PondTile({ tile, uprightDeg = 0 }: {
+  tile: RiverTile
+  uprightDeg?: number
+}) {
   const title = [
     tile.pai,
     tile.tsumogiri ? 'tsumogiri (cut from draw)' : 'TEDASHI (from hand)',
     tile.riichi ? '— riichi declaration' : '',
-    tile.called ? '— called by another player' : '',
+    tile.calledBy ? `— called by ${WIND_NAME[tile.calledBy] ?? tile.calledBy}` : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -279,7 +291,10 @@ function PondTile({ tile }: { tile: RiverTile }) {
       dimmed={tile.tsumogiri}
       tedashi={!tile.tsumogiri}
       rotated={tile.riichi}
-      faded={tile.called}
+      calledBy={tile.calledBy}
+      // The riichi tile is itself turned 90deg, so its badge needs that
+      // undone too on top of the pond's own rotation.
+      uprightDeg={uprightDeg - (tile.riichi ? 90 : 0)}
       title={title}
     />
   )

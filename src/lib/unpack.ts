@@ -78,21 +78,29 @@ const MELD_TYPE: Record<string, Meld['type']> = {
   p: 'pon', c: 'chi', d: 'daiminkan', a: 'ankan', k: 'kakan',
 }
 
-/** Parse a packed river token: flags '-' tedashi, '*' riichi, '!' called. */
+/**
+ * Parse a packed river token.
+ *
+ * Flags: '-' tedashi, '*' riichi, '!X' called away by the seat whose wind is
+ * X. The '!' is the one flag that carries a payload, so its wind letter is
+ * consumed with it rather than being mistaken for the start of the tile.
+ */
 export function unpackRiverTile(token: string): RiverTile {
   let i = 0
   let tedashi = false
   let riichi = false
-  let called = false
+  let calledBy: string | null = null
   while (i < token.length) {
     const c = token[i]
     if (c === '-') tedashi = true
     else if (c === '*') riichi = true
-    else if (c === '!') called = true
-    else break
+    else if (c === '!') {
+      calledBy = token[i + 1] ?? null
+      i++
+    } else break
     i++
   }
-  return { pai: token.slice(i), tsumogiri: !tedashi, riichi, called }
+  return { pai: token.slice(i), tsumogiri: !tedashi, riichi, calledBy }
 }
 
 function unpackMelds(m: PackedSeat['m']): Meld[] {

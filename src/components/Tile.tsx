@@ -9,6 +9,11 @@ export type TileSize = 'sm' | 'md' | 'lg'
 const WIDTHS: Record<TileSize, number> = { sm: 34, md: 44, lg: 56 }
 const ASPECT = 128 / 104
 
+/** The badge names the caller by wind, the way the table itself does. */
+const WIND_KANJI: Record<string, string> = {
+  E: '東', S: '南', W: '西', N: '北',
+}
+
 interface TileProps {
   pai: Pai
   size?: TileSize
@@ -18,14 +23,28 @@ interface TileProps {
   /** Draws the tedashi bar. Kept separate from `dimmed` so the cue survives
    *  on tiles whose own art is already dark. */
   tedashi?: boolean
-  /** Marks the tile as claimed by another player. Purely additive: it draws a
-   *  claim mark and changes nothing else about how the tile reads, so a called
-   *  tedashi still looks exactly like any other tedashi. */
-  faded?: boolean
+  /**
+   * Seat wind of the player who called this tile away, or null.
+   *
+   * Purely additive: it draws a badge and changes nothing else about how the
+   * tile reads, so a called tedashi still looks exactly like any other
+   * tedashi. Naming the caller rather than just marking the tile is what lets
+   * two identical tiles called by different players be told apart.
+   */
+  calledBy?: string | null
   selected?: boolean
   rotated?: boolean
   /** Face-down, for the outer tiles of an ankan. */
   facedown?: boolean
+  /**
+   * Degrees to turn the caller badge so it stays upright.
+   *
+   * Each pond is rotated to face its own seat, which is right for the tiles
+   * but turns the badge's kanji with them — and upside-down text is simply
+   * hard to read, the same reason the nameplates stay upright. The caller
+   * passes the inverse of its own rotation.
+   */
+  uprightDeg?: number
   onClick?: () => void
   title?: string
   className?: string
@@ -51,10 +70,11 @@ export function Tile({
   size = 'md',
   dimmed = false,
   tedashi = false,
-  faded = false,
+  calledBy = null,
   selected = false,
   rotated = false,
   facedown = false,
+  uprightDeg = 0,
   onClick,
   title,
   className = '',
@@ -72,15 +92,16 @@ export function Tile({
   // at pond scale; what makes the tedashi tiles pop in a real client is that
   // the tsumogiri ones recede into the mat entirely.
   //
-  // `faded` deliberately changes nothing here. Being called away and being cut
-  // from the draw are different facts, and dimming, fading or shrinking a
+  // `calledBy` deliberately changes nothing here. Being called away and being
+  // cut from the draw are different facts, and dimming, fading or shrinking a
   // called tile all pulled it towards reading as tsumogiri — erasing the one
-  // cue the pond exists to show. The claim mark carries it instead, so a
-  // called tedashi sits at full strength beside every other tedashi.
+  // cue the pond exists to show. The badge carries it instead, so a called
+  // tedashi sits at full strength beside every other tedashi.
   const filter = dimmed ? 'grayscale(1) brightness(.55) contrast(.95)' : undefined
 
-  // Scaled to the tile so the mark stays proportional at every size.
+  // Scaled to the tile so the marks stay proportional at every size.
   const bar = Math.max(2, Math.round(h * 0.075))
+  const badge = Math.max(11, Math.round(h * 0.34))
 
   return (
     <Element
@@ -89,7 +110,7 @@ export function Tile({
       title={title ?? tileLabel(pai)}
       aria-label={tileLabel(pai)}
       aria-pressed={interactive ? selected : undefined}
-      style={{ width: w, height: h, ...(faded ? { zIndex: 1 } : {}) }}
+      style={{ width: w, height: h, ...(calledBy ? { zIndex: 1 } : {}) }}
       className={[
         // No `overflow-hidden` here: the claim mark overhangs the corner on
         // purpose, and clipping at the root would cut it in half. The art
@@ -138,29 +159,36 @@ export function Tile({
         />
       )}
 
-      {/* The only thing that marks a called tile.
-          Pinned to the top-right corner, clear of both the tile's number and
+      {/* The only thing that marks a called tile: a badge naming the seat that
+          took it. A bare claim mark could not answer "called by whom" when two
+          players call the same tile face, which is exactly when the pond is
+          hardest to read.
+          Hung off the top-right corner, clear of both the tile's number and
           the tedashi bar along the bottom edge. The offsets are set inline
           rather than as utility classes: `-right-px`/`-top-px` are not
-          generated here, so the glyph kept its static position — bottom-left,
-          directly on top of the tedashi bar, where it was invisible.
-          U+FE0F forces emoji presentation so the glyph keeps its own colours
-          instead of inheriting the surrounding white text, and the dark halo
-          keeps it legible on a pale honour face as well as a dimmed one. */}
-      {faded && !facedown && (
+          generated here, so an earlier mark kept its static position —
+          bottom-left, on top of the tedashi bar, where it was invisible. */}
+      {calledBy && !facedown && (
         <span
           aria-hidden
-          className="pointer-events-none absolute leading-none"
+          className="pointer-events-none absolute flex items-center justify-center rounded-full font-bold text-white ring-1 ring-black/40"
           style={{
-            // Hung off the corner rather than tucked inside it, so it reads as
-            // a badge on the tile instead of part of the tile's own face.
-            top: -Math.round(h * 0.07),
-            right: -Math.round(w * 0.1),
-            fontSize: Math.max(9, Math.round(h * 0.3)),
-            textShadow: '0 0 2px rgba(0,0,0,.9), 0 0 4px rgba(0,0,0,.6)',
+            top: -Math.round(h * 0.06),
+            right: -Math.round(w * 0.12),
+            width: badge,
+            height: badge,
+            fontSize: Math.round(badge * 0.72),
+            // Amber rather than the felt palette: the badge has to separate
+            // from the tile art beneath it at every suit, and nothing else on
+            // the table is this colour.
+            backgroundColor: 'rgb(217 119 6)',
+            lineHeight: 1,
+            // Turned back against the pond's own rotation. The badge is a
+            // circle, so spinning it moves no layout and only rights the text.
+            ...(uprightDeg ? { transform: `rotate(${uprightDeg}deg)` } : {}),
           }}
         >
-          {'\u{1F590}\uFE0F'}
+          {WIND_KANJI[calledBy] ?? calledBy}
         </span>
       )}
 
