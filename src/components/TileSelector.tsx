@@ -35,11 +35,18 @@ export function TileSelector({
   return (
     <div className="space-y-2.5">
       {groups.map((g) => (
-        <div key={g.label} className="flex items-center gap-2">
-          <span className="w-14 shrink-0 text-sm font-medium text-white/50">
+        <div key={g.label} className="flex items-center gap-1.5">
+          <span className="w-9 shrink-0 text-xs font-medium text-white/50">
             {g.label}
           </span>
-          <div className="flex flex-wrap gap-1.5">
+          {/* `flex-nowrap`: a suit is read as the run 1-9, and a row that wraps
+              after the fifth tile turns that run into two half-rows you have to
+              reassemble before you can point at 6p. The tiles are sized so all
+              nine fit the sidebar.
+              On a narrow phone nine tiles do not fit at their natural width,
+              so they are allowed to squeeze; below the width where they stay
+              nameable the row wraps instead of pushing the page sideways. */}
+          <div className="flex min-w-0 flex-wrap gap-1 sm:flex-nowrap">
             {g.tiles.map((t) => {
               const isSel = sel.has(t)
               const isAns = answer?.has(t) ?? false
@@ -55,9 +62,13 @@ export function TileSelector({
                 <Tile
                   key={t}
                   pai={t}
-                  size="md"
+                  size="sm"
                   selected={isSel && !answer}
                   onClick={disabled || blocked ? undefined : () => onToggle(t)}
+                  // Allowed to give ground rather than overflow the page. The
+                  // art is a background image sized to the element, so a
+                  // squeezed tile stays a whole tile, just narrower.
+                  shrinkable
                   className={ring}
                 />
               )

@@ -111,6 +111,26 @@ function meldReach(seats: SeatView[]): number {
  */
 const MELD_OFFSET = 28
 
+/**
+ * Everything in the block that does not scale with the table: the box's own
+ * padding, the rule above the hand and the gaps and label around it.
+ *
+ * Subtracted from the height budget before the table is sized, so the budget
+ * is spent on the part that can actually shrink.
+ */
+const BOX_CHROME = 62
+
+/**
+ * Smallest the table may be scaled to.
+ *
+ * Set by what a river stays countable at, not by what still fits. Below this
+ * the suit of a 3p versus a 3s is a guess, and a table you cannot read is
+ * worth less than one you have to scroll a little to see — fitting the screen
+ * was only ever a means to reading the position. A window short enough to hit
+ * this floor gets a scrollbar instead.
+ */
+const MIN_SCALE = 0.68
+
 interface SeatView {
   seat: number
   river: RiverTile[]
@@ -141,10 +161,21 @@ interface SeatView {
 export function Table({
   puzzle,
   handSelect = null,
+  maxHeight = null,
 }: {
   puzzle: Puzzle
   /** When set, your own hand below the table doubles as the answer input. */
   handSelect?: HandSelect | null
+  /**
+   * Height the whole block must fit inside, in CSS pixels.
+   *
+   * Width alone is the wrong constraint on a laptop: a column wide enough to
+   * hold the table at full size still runs the river off the bottom of the
+   * screen, and a river you have to scroll to reach is a river you will not
+   * count. Given a budget, the table shrinks to whichever of the two bites
+   * first. Null means width-only, as before.
+   */
+  maxHeight?: number | null
 }) {
   const { target, others, round } = puzzle
 
@@ -159,6 +190,24 @@ export function Table({
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // The hand strip below the table scales with it, so the height budget has to
+  // cover both. Measured rather than derived: its height depends on the tile
+  // size and on whether the hand wrapped onto a second line.
+  const handRef = useRef<HTMLDivElement>(null)
+  const [handH, setHandH] = useState(0)
+  // Re-attached per puzzle: the strip only exists when the viewer holds a hand,
+  // so the node it observes comes and goes with the hand itself.
+  useEffect(() => {
+    const el = handRef.current
+    if (!el) {
+      setHandH(0)
+      return
+    }
+    const ro = new ResizeObserver(([e]) => setHandH(e.contentRect.height))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [puzzle])
 
   const bySeat = new Map<number, SeatView>()
   bySeat.set(target.seat, { ...target, isTarget: true })
@@ -186,7 +235,22 @@ export function Table({
   // Only ever shrink: a small table blown up to fill a wide column would look
   // worse than one sitting at its natural size. Before the first measurement
   // `avail` is 0, so render unscaled and let the observer correct it.
-  const scale = avail > 0 ? Math.min(1, avail / size) : 1
+  //
+  // Both budgets apply at once and the tighter one wins. The height one has to
+  // discount the padding and the hand strip first, since those are what the
+  // square table actually shares its budget with.
+  const byWidth = avail > 0 ? avail / size : 1
+  const byHeight =
+    maxHeight === null
+      ? 1
+      : Math.max(0, maxHeight - handH - BOX_CHROME) / size
+  // The floor guards the height budget only. Trading a little scrolling for a
+  // readable table is a fair trade vertically, where the overflow is a scroll
+  // the page already supports. Horizontally it is not: the table is absolutely
+  // positioned, so a width it refuses to meet does not scroll, it clips — and
+  // the seats it cuts off are the left and right rivers, which is most of what
+  // there is to read. On a phone the width is what binds, so it always wins.
+  const scale = Math.min(1, byWidth, Math.max(MIN_SCALE, byHeight))
 
   return (
     <div
@@ -249,6 +313,7 @@ export function Table({
               read as one block to point at, and the selection outlines of two
               adjacent copies would run into each other. */}
           <div
+            ref={handRef}
             className={[
               'flex flex-wrap items-end justify-center',
               handSelect ? 'gap-1.5' : 'gap-px',

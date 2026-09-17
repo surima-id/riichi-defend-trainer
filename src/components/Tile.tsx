@@ -9,6 +9,15 @@ export type TileSize = 'sm' | 'md' | 'lg'
 const WIDTHS: Record<TileSize, number> = { sm: 34, md: 44, lg: 56 }
 const ASPECT = 128 / 104
 
+/**
+ * Narrowest a shrinkable tile may be squeezed to.
+ *
+ * A tile squeezed past this is no longer a tile you can name — the suit mark
+ * and the number are both gone. A row that cannot fit its tiles at this width
+ * is better off wrapping.
+ */
+const MIN_W = 22
+
 /** The badge names the caller by wind, the way the table itself does. */
 const WIND_KANJI: Record<string, string> = {
   E: '東', S: '南', W: '西', N: '北',
@@ -41,6 +50,16 @@ interface TileProps {
    * picked out of a full pond at a glance.
    */
   latest?: boolean
+  /**
+   * Let the tile give ground when its row is too narrow, instead of pushing
+   * the page sideways.
+   *
+   * Off everywhere the tile stands for a real tile on a real table — a river,
+   * a meld, a hand — where a squeezed tile would misreport the layout it is
+   * drawing. On for the answer grid, which is a control rather than a picture
+   * of the table, and which has to survive a phone's width.
+   */
+  shrinkable?: boolean
   /**
    * Degrees to turn the caller badge so it stays upright.
    *
@@ -80,6 +99,7 @@ export function Tile({
   rotated = false,
   facedown = false,
   latest = false,
+  shrinkable = false,
   uprightDeg = 0,
   onClick,
   title,
@@ -117,7 +137,15 @@ export function Tile({
       aria-label={tileLabel(pai)}
       aria-pressed={interactive ? selected : undefined}
       style={{
-        width: w,
+        // A shrinkable tile takes `width` as a ceiling rather than a fixed
+        // size, so flex can take it below `w` when the row will not fit — but
+        // only down to MIN_W. Left unbounded it shrank to nothing: `min-w-0`
+        // removes the floor that normally stops a flex item vanishing, and a
+        // tile whose art is a background image has no intrinsic width of its
+        // own to fall back on.
+        ...(shrinkable
+          ? { maxWidth: w, flexBasis: w, minWidth: Math.min(w, MIN_W) }
+          : { width: w }),
         height: h,
         // Both the ring and the badge overhang the tile, so either has to
         // outrank the neighbours that paint after it.
@@ -127,7 +155,8 @@ export function Tile({
         // No `overflow-hidden` here: the claim mark overhangs the corner on
         // purpose, and clipping at the root would cut it in half. The art
         // layer clips itself instead, which is all the rounding was for.
-        'relative shrink-0 rounded-[3px] bg-transparent p-0 transition',
+        'relative rounded-[3px] bg-transparent p-0 transition',
+        shrinkable ? 'min-w-0 shrink' : 'shrink-0',
         // A face-down tile is a real tile, so it has to read as one against
         // the felt. The old dark emerald sat at almost the mat's own
         // lightness, which made the outer tiles of an ankan nearly vanish --
