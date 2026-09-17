@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { ALL_TILES } from '../lib/tiles'
 import { Tile } from './Tile'
 import type { Pai } from '../lib/types'
@@ -25,6 +26,23 @@ const GROUPS: { label: string; tiles: Pai[] }[] = [
   { label: 'Honors', tiles: ALL_TILES.slice(27) },
 ]
 
+/** Widest row: a suit laid out 1-9. The tiles are sized to fit this. */
+const COLUMNS = 9
+
+/** The `gap-1` between tiles in a row. */
+const GAP = 4
+
+/**
+ * Bounds on the size the measured width is allowed to produce.
+ *
+ * The upper bound is what a tile is worth as a target — past it the row is
+ * just further for the eye and the cursor to travel, and the grid starts to
+ * compete with the table for attention. The lower is where a tile stops being
+ * nameable at a glance, below which the row wraps rather than shrinking on.
+ */
+const MAX_TILE_W = 46
+const MIN_TILE_W = 26
+
 export function TileSelector({
   selected, onToggle, disabled, reveal, atCap = false,
 }: TileSelectorProps) {
@@ -32,21 +50,40 @@ export function TileSelector({
   const answer = reveal ? new Set(reveal.answer.map((t) => t)) : null
   const groups = GROUPS
 
+  // Tiles are sized from the room the column actually has, rather than picked
+  // from the fixed sizes and left to fit or not. The earlier version squeezed
+  // the width and kept the height, which made every tile in the grid taller
+  // than it was wide — the one place in the app where a tile did not look like
+  // the tiles on the table beside it.
+  const rowRef = useRef<HTMLDivElement>(null)
+  const [rowW, setRowW] = useState(0)
+  useEffect(() => {
+    const el = rowRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setRowW(e.contentRect.width))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const fitted = Math.floor((rowW - (COLUMNS - 1) * GAP) / COLUMNS)
+  const tileW = rowW > 0
+    ? Math.max(MIN_TILE_W, Math.min(MAX_TILE_W, fitted))
+    : undefined
+
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {groups.map((g) => (
-        <div key={g.label} className="flex items-center gap-1.5">
-          <span className="w-9 shrink-0 text-xs font-medium text-white/50">
+        <div key={g.label} className="flex items-center gap-2">
+          <span className="w-10 shrink-0 text-xs font-medium text-white/50">
             {g.label}
           </span>
-          {/* `flex-nowrap`: a suit is read as the run 1-9, and a row that wraps
-              after the fifth tile turns that run into two half-rows you have to
-              reassemble before you can point at 6p. The tiles are sized so all
-              nine fit the sidebar.
-              On a narrow phone nine tiles do not fit at their natural width,
-              so they are allowed to squeeze; below the width where they stay
-              nameable the row wraps instead of pushing the page sideways. */}
-          <div className="flex min-w-0 flex-wrap gap-1 sm:flex-nowrap">
+          {/* A suit is read as the run 1-9, and a row that wraps mid-suit turns
+              that run into two half-rows you have to reassemble before you can
+              point at 6p — so the tiles are sized to put all nine on one line.
+              Wrapping is left enabled as the escape hatch: on a phone too
+              narrow even for MIN_TILE_W the row gives way rather than pushing
+              the page sideways. */}
+          <div ref={g.label === 'Man' ? rowRef : undefined} className="flex min-w-0 flex-wrap gap-1">
             {g.tiles.map((t) => {
               const isSel = sel.has(t)
               const isAns = answer?.has(t) ?? false
@@ -62,13 +99,9 @@ export function TileSelector({
                 <Tile
                   key={t}
                   pai={t}
-                  size="sm"
+                  width={tileW}
                   selected={isSel && !answer}
                   onClick={disabled || blocked ? undefined : () => onToggle(t)}
-                  // Allowed to give ground rather than overflow the page. The
-                  // art is a background image sized to the element, so a
-                  // squeezed tile stays a whole tile, just narrower.
-                  shrinkable
                   className={ring}
                 />
               )

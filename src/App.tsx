@@ -101,30 +101,31 @@ function useRoomBelow(): [React.RefObject<HTMLDivElement | null>, number] {
   const ref = useRef<HTMLDivElement>(null)
   const [room, setRoom] = useState(0)
 
+  const measure = () => {
+    const el = ref.current
+    if (!el) return
+    // Document-relative rather than viewport-relative, so a scrolled page
+    // reports the same room as an unscrolled one — the question is what fits
+    // from the top, not what happens to be on screen right now.
+    const top = el.getBoundingClientRect().top + window.scrollY
+    // Same value re-set is a no-op in React, so this settles after one pass
+    // rather than looping: the top is fixed by the header above, and nothing
+    // the table does below it moves that.
+    setRoom(window.innerHeight - top - PAGE_FOOT)
+  }
+
+  // Deliberately every render, not once. The ref is still empty on the first
+  // pass, because the app renders a loading line until the puzzles arrive, so
+  // a mount-only measurement reads nothing and never runs again. Watching the
+  // body instead does not help either: `min-h-screen` pins its height to the
+  // viewport, so the table appearing resizes nothing and the observer stays
+  // silent — which left the table at its unscaled size until the window was
+  // resized by hand.
+  useEffect(measure)
+
   useEffect(() => {
-    const measure = () => {
-      const el = ref.current
-      if (!el) return
-      // Document-relative rather than viewport-relative, so a scrolled page
-      // reports the same room as an unscrolled one — the question is what fits
-      // from the top, not what happens to be on screen right now.
-      const top = el.getBoundingClientRect().top + window.scrollY
-      setRoom(window.innerHeight - top - PAGE_FOOT)
-    }
-    measure()
     window.addEventListener('resize', measure)
-    // Observed unconditionally: the ref is still empty on this first pass,
-    // because the app renders a loading line until the puzzles arrive. The
-    // body resize that brings the table in is what lands the first real
-    // measurement. It also catches the header reflowing on its own — filters
-    // wrapping, the score appearing — which moves the table's top without the
-    // window ever resizing.
-    const ro = new ResizeObserver(measure)
-    ro.observe(document.body)
-    return () => {
-      window.removeEventListener('resize', measure)
-      ro.disconnect()
-    }
+    return () => window.removeEventListener('resize', measure)
   }, [])
 
   return [ref, room]
@@ -421,11 +422,15 @@ export default function App() {
           />
         </div>
 
-        {/* Fixed width rather than a fraction: the selector's natural size is
-            one suit laid out 1-9 plus its label, and anything wider is padding
-            the eye has to travel. What is left over goes to the table, which
-            can always use it. */}
-        <div className="w-full shrink-0 lg:w-[24rem]">
+        {/* Sized in steps rather than as a share of the row. A fraction gave
+            the grid more of a narrow laptop than it can use — the tiles stop
+            growing at their own ceiling — while taking the width from the
+            table, which was the one actually short of room there. The steps go
+            the other way: on a 1366 the grid stays modest and the table gets
+            the rest; past `xl` the table has stopped growing anyway, so the
+            surplus that would otherwise sit beside it as bare felt goes to the
+            grid instead. */}
+        <div className="w-full shrink-0 lg:w-[24rem] xl:w-[30rem]">
           <div className="rounded-xl border border-white/10 bg-felt-800/80 p-3">
             <div className="mb-1 flex items-baseline justify-between gap-2">
               <h3 className="text-sm font-semibold text-white">

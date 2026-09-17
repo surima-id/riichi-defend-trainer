@@ -131,6 +131,23 @@ const BOX_CHROME = 62
  */
 const MIN_SCALE = 0.68
 
+/**
+ * Largest the table may be scaled to.
+ *
+ * The tile art is a bitmap drawn at its native size, so past roughly half
+ * again it starts to look soft rather than big. Sized to stay the right side
+ * of that, which is well past what any laptop's height budget allows anyway.
+ */
+const MAX_SCALE = 1.45
+
+/**
+ * Width of one tile in your own hand, before the table's scale is applied.
+ *
+ * Larger than a river tile: the hand is the one row you read tile by tile
+ * rather than take in as a block, and in safe mode it is also what you click.
+ */
+const HAND_TILE_W = 46
+
 interface SeatView {
   seat: number
   river: RiverTile[]
@@ -232,25 +249,34 @@ export function Table({
   const size =
     2 * Math.max(INSET + POND_H + PLATE_GUTTER, meldReach(seats.map((s) => s.seat)))
 
-  // Only ever shrink: a small table blown up to fill a wide column would look
-  // worse than one sitting at its natural size. Before the first measurement
-  // `avail` is 0, so render unscaled and let the observer correct it.
-  //
   // Both budgets apply at once and the tighter one wins. The height one has to
   // discount the padding and the hand strip first, since those are what the
-  // square table actually shares its budget with.
+  // square table actually shares its budget with. Before the first measurement
+  // `avail` is 0, so render unscaled and let the observer correct it.
   const byWidth = avail > 0 ? avail / size : 1
   const byHeight =
     maxHeight === null
       ? 1
       : Math.max(0, maxHeight - handH - BOX_CHROME) / size
+
   // The floor guards the height budget only. Trading a little scrolling for a
   // readable table is a fair trade vertically, where the overflow is a scroll
   // the page already supports. Horizontally it is not: the table is absolutely
   // positioned, so a width it refuses to meet does not scroll, it clips — and
   // the seats it cuts off are the left and right rivers, which is most of what
   // there is to read. On a phone the width is what binds, so it always wins.
-  const scale = Math.min(1, byWidth, Math.max(MIN_SCALE, byHeight))
+  //
+  // Growing past 1 is allowed, up to MAX_SCALE. The table is square and the
+  // room around it rarely is, so on a large screen the binding budget stops
+  // well short of the column and the surplus showed up as bare felt around a
+  // small table. The art is a bitmap, so there is a point past which enlarging
+  // only softens it — that is what the ceiling is for, not the layout.
+  const scale = Math.min(MAX_SCALE, byWidth, Math.max(MIN_SCALE, byHeight))
+
+  // Your hand is drawn outside the scaled block, so it has to be sized by hand
+  // to keep step with it — left at a fixed size it shrank and grew out of
+  // proportion to the very tiles it is meant to be compared against.
+  const handTileW = Math.round(HAND_TILE_W * scale)
 
   return (
     <div
@@ -320,7 +346,12 @@ export function Table({
             ].join(' ')}
           >
             {viewerHand.map((t, i) => (
-              <HandTile key={i} pai={t} select={handSelect} />
+              <HandTile
+                key={i}
+                pai={t}
+                width={handTileW}
+                select={handSelect}
+              />
             ))}
           </div>
         </div>
@@ -336,8 +367,16 @@ export function Table({
  * you named, amber for one you missed, red for a cut that deals in, and a fade
  * for everything already accounted for.
  */
-function HandTile({ pai, select }: { pai: Pai; select: HandSelect | null }) {
-  if (!select) return <Tile pai={pai} size="md" />
+function HandTile({
+  pai,
+  width,
+  select,
+}: {
+  pai: Pai
+  width: number
+  select: HandSelect | null
+}) {
+  if (!select) return <Tile pai={pai} width={width} />
 
   // Red fives answer as their plain counterpart: safety is a property of the
   // face, and a hand holding 0p and 5p offers one answer, not two.
@@ -357,7 +396,7 @@ function HandTile({ pai, select }: { pai: Pai; select: HandSelect | null }) {
   return (
     <Tile
       pai={pai}
-      size="md"
+      width={width}
       selected={isSel && !answer}
       onClick={select.disabled ? undefined : () => select.onToggle(face)}
       className={ring}
