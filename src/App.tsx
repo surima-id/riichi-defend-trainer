@@ -4,7 +4,8 @@ import { Table } from './components/Table'
 import { Tile } from './components/Tile'
 import { TileSelector } from './components/TileSelector'
 import {
-  DEAL_IN_PENALTY, scoreGuess, scoreSafeGuess, type Mode, type Score,
+  DEAL_IN_PENALTY, MAX_WAIT_SELECTION, scoreGuess, scoreSafeGuess,
+  type Mode, type Score,
 } from './lib/scoring'
 import { normalize, sortTiles } from './lib/tiles'
 import { unpackAll, type PackedPuzzle } from './lib/unpack'
@@ -209,8 +210,18 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [result, revealed, next, submit])
 
+  // Wait reading is capped: past nine tiles an answer has stopped being a read,
+  // and the score says so. Refusing the tenth tile makes that boundary something
+  // you meet at the moment you cross it, rather than something you infer from a
+  // number afterwards. Deselecting is always allowed, cap or no cap.
+  const atCap = mode === 'waits' && selected.length >= MAX_WAIT_SELECTION
+
   const toggle = (pai: Pai) =>
-    setSelected((s) => (s.includes(pai) ? s.filter((t) => t !== pai) : [...s, pai]))
+    setSelected((s) => {
+      if (s.includes(pai)) return s.filter((t) => t !== pai)
+      if (mode === 'waits' && s.length >= MAX_WAIT_SELECTION) return s
+      return [...s, pai]
+    })
 
   if (error) {
     return (
@@ -364,6 +375,7 @@ export default function App() {
             selected={selected}
             onToggle={toggle}
             disabled={Boolean(result) || revealed}
+            atCap={atCap}
             reveal={result || revealed ? { answer: puzzle.answer } : null}
           />
         )}
@@ -506,8 +518,19 @@ export default function App() {
             </>
           )}
           <span className="text-sm text-white/50">
-            {result || revealed ? '' : `${selected.length} selected`}
+            {result || revealed
+              ? ''
+              : mode === 'safe'
+                ? `${selected.length} selected`
+                : `${selected.length}/${MAX_WAIT_SELECTION} selected`}
           </span>
+          {/* Said once the cap bites, so a click that does nothing has a
+              reason attached to it. */}
+          {!result && !revealed && atCap && (
+            <span className="text-sm text-gold-300/80">
+              Nine tiles is the widest read this drill accepts.
+            </span>
+          )}
         </div>
       </div>
 

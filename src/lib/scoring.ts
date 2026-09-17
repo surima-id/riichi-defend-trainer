@@ -38,11 +38,56 @@ export interface Score {
 export const DEAL_IN_PENALTY = 120
 
 /**
+ * Most tiles a wait guess may name.
+ *
+ * A wait is at most a handful of tiles, so an answer wider than this has
+ * stopped being a read. The cap is enforced at the input as well as here: a
+ * player who cannot select a tenth tile learns the boundary by feel, rather
+ * than by watching a score they cannot explain drop towards nothing.
+ */
+export const MAX_WAIT_SELECTION = 9
+
+/**
+ * What a guess spread across the full nine tiles keeps of its credit.
+ *
+ * Not zero: casting a wide net over the right area is a weaker read than
+ * naming the tile, but it is not the same as being wrong, and a player who
+ * narrowed a hand to "somewhere in the low souzu" has learnt something worth
+ * marking. Low enough that a precise answer is always worth several vague
+ * ones.
+ */
+const BROADEST_CREDIT = 0.2
+
+/**
+ * How much of the coverage score a guess of this width keeps.
+ *
+ * Measured as tiles named beyond what the answer itself needs, so the taper
+ * charges for vagueness rather than for the wait being wide: a three-sided
+ * wait answered with three tiles is charged nothing, while a tanki answered
+ * with three has spread itself over two tiles it did not need. From there the
+ * credit falls linearly to BROADEST_CREDIT at the nine-tile cap.
+ */
+function breadthFactor(guessed: number, answerSize: number): number {
+  const extra = Math.max(0, guessed - answerSize)
+  const room = Math.max(1, MAX_WAIT_SELECTION - answerSize)
+  const spread = Math.min(1, extra / room)
+  return 1 - spread * (1 - BROADEST_CREDIT)
+}
+
+/**
  * Grade a guess against the true wait set.
  *
  * Binary right/wrong would punish a three-sided wait the same as a tanki, so
- * we grade on set overlap: partial credit via F1, with a bonus for an exact
- * match. Red fives are normalised — guessing '5m' covers '5mr'.
+ * we grade on set overlap: partial credit with a bonus for an exact match. Red
+ * fives are normalised — guessing '5m' covers '5mr'.
+ *
+ * Partial credit is coverage tapered by how widely the guess was cast, not F1.
+ * F1 collapses fast enough that naming 1-2-3m with 3m the wait scored close to
+ * nothing, which taught the wrong lesson: reading the wait down to a three-tile
+ * neighbourhood is most of the work, and the river rarely narrows further than
+ * that. Under the taper that guess keeps a clear majority of the marks, a
+ * nine-tile scattergun keeps BROADEST_CREDIT of them, and only an exact answer
+ * pays in full.
  */
 export function scoreGuess(selected: Pai[], answer: Pai[]): Score {
   const sel = new Set(selected.map(normalize))
@@ -58,7 +103,11 @@ export function scoreGuess(selected: Pai[], answer: Pai[]): Score {
     precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall)
 
   const exact = missed.length === 0 && falsePositives.length === 0 && ans.size > 0
-  const points = exact ? 100 : Math.round(f1 * 80)
+  // An exact read always pays in full, so no amount of tapering can make a
+  // wider guess worth more than the right one.
+  const points = exact
+    ? 100
+    : Math.round(recall * 80 * breadthFactor(sel.size, ans.size))
 
   return { hits, falsePositives, missed, exact, f1, coverage: recall, points }
 }

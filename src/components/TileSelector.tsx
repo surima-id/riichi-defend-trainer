@@ -8,6 +8,14 @@ interface TileSelectorProps {
   disabled?: boolean
   /** After submitting, mark which tiles were right and wrong. */
   reveal?: { answer: Pai[] } | null
+  /**
+   * The selection limit has been reached, so no further tile can be added.
+   *
+   * Unselected tiles go flat and lose their pointer while this holds, rather
+   * than staying live and silently ignoring the click. Already-selected tiles
+   * stay clickable — you always have to be able to take a tile back.
+   */
+  atCap?: boolean
 }
 
 const GROUPS: { label: string; tiles: Pai[] }[] = [
@@ -18,7 +26,7 @@ const GROUPS: { label: string; tiles: Pai[] }[] = [
 ]
 
 export function TileSelector({
-  selected, onToggle, disabled, reveal,
+  selected, onToggle, disabled, reveal, atCap = false,
 }: TileSelectorProps) {
   const sel = new Set(selected)
   const answer = reveal ? new Set(reveal.answer.map((t) => t)) : null
@@ -35,7 +43,8 @@ export function TileSelector({
             {g.tiles.map((t) => {
               const isSel = sel.has(t)
               const isAns = answer?.has(t) ?? false
-              let ring = ''
+              const blocked = atCap && !isSel
+              let ring = blocked ? 'opacity-30' : ''
               if (answer) {
                 if (isAns && isSel) ring = 'outline outline-2 outline-offset-1 outline-emerald-500'
                 else if (isAns) ring = 'outline outline-2 outline-offset-1 outline-amber-500'
@@ -48,7 +57,7 @@ export function TileSelector({
                   pai={t}
                   size="md"
                   selected={isSel && !answer}
-                  onClick={disabled ? undefined : () => onToggle(t)}
+                  onClick={disabled || blocked ? undefined : () => onToggle(t)}
                   className={ring}
                 />
               )
