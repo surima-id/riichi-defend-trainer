@@ -528,7 +528,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <main className="mx-auto min-h-screen max-w-5xl px-4 py-6">
       <h1 className="mb-1 text-2xl font-bold tracking-tight text-white">
-        Surima Riichi Defend Trainer
+        SURIMA Riichi Defend Trainer
       </h1>
       <p className="mb-4 text-sm text-white/55">
         Read the river. Guess the wait. Repeat.

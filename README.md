@@ -1,4 +1,4 @@
-# Surima Riichi Defend Trainer
+# SURIMA Riichi Defend Trainer
 
 Rapid-fire wait-reading drill built on real Tenhou Houou (鳳凰卓) game logs.
 
