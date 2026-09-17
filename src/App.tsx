@@ -132,14 +132,16 @@ function useRoomBelow(): [React.RefObject<HTMLDivElement | null>, number] {
 }
 
 /**
- * Everything the page still owes below the table: the collapsed legend, the
- * footer rule and link, and a little breathing room at the window's edge.
+ * What the page still owes below the table: the footer's top margin, its rule
+ * and its link, plus a little breathing room at the window's edge.
  *
  * Counted into the budget so the drill genuinely lands on one screen. Left
  * out, the table sized itself to the viewport's bottom edge and the page
- * scrolled anyway — by exactly the strip underneath it.
+ * scrolled anyway — by exactly the strip underneath it. Sized to the footer
+ * alone since the legend moved into the answer column; the extra it used to
+ * reserve was showing up as bare felt under the table.
  */
-const PAGE_FOOT = 108
+const PAGE_FOOT = 72
 
 interface Stats {
   answered: number
@@ -281,7 +283,7 @@ export default function App() {
 
   if (error) {
     return (
-      <Shell>
+      <Shell titled>
         <div className="rounded-lg border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800">
           <p className="font-semibold">Could not load puzzles.</p>
           <p className="mt-1">{error}</p>
@@ -296,7 +298,7 @@ export default function App() {
 
   if (!pool || !puzzle) {
     return (
-      <Shell>
+      <Shell titled>
         <p className="text-sm text-white/50">Loading puzzles…</p>
       </Shell>
     )
@@ -307,10 +309,16 @@ export default function App() {
 
   return (
     <Shell>
-      {/* Everything that configures the drill on one line, so the table starts
-          as high up the page as it can. Two stacked bars cost around 70px of
-          the very budget the table is short of on a laptop. */}
+      {/* The title and everything that configures the drill on one line, so
+          the table starts as high up the page as it can. Every band above it
+          comes straight out of the table's height budget, which is the budget
+          that binds at every screen size — a row here is a smaller river.
+          The title wraps to its own line when the row runs out of width. */}
       <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <h1 className="text-base font-bold tracking-tight text-white">
+          SURIMA Riichi Defend Trainer
+        </h1>
+
         <div className="flex gap-1 rounded-lg border border-white/10 bg-felt-800/80 p-0.5 text-xs">
           {([
             ['waits', 'Waits', 'Name every tile that completes their hand.'],
@@ -660,19 +668,28 @@ export default function App() {
   )
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+/**
+ * The page's frame. `titled` draws the heading above the content.
+ *
+ * The drill itself opts out and renders its own title inline with the filters,
+ * because a band of its own above the table is a band out of the table's
+ * height budget. The loading and error states have no such row to join, so
+ * they keep the standalone heading rather than appearing untitled.
+ */
+function Shell({
+  children,
+  titled = false,
+}: {
+  children: React.ReactNode
+  titled?: boolean
+}) {
   return (
     <main className="mx-auto min-h-screen max-w-[100rem] px-4 py-3">
-      {/* Title and tagline on one line: the tagline is a flourish, and stacked
-          it cost the table a row of its own for no information. */}
-      <div className="mb-2 flex flex-wrap items-baseline gap-x-3">
-        <h1 className="text-lg font-bold tracking-tight text-white">
+      {titled && (
+        <h1 className="mb-2 text-base font-bold tracking-tight text-white">
           SURIMA Riichi Defend Trainer
         </h1>
-        <p className="text-xs text-white/45">
-          Read the river. Guess the wait. Repeat.
-        </p>
-      </div>
+      )}
       {children}
 
       <footer className="mt-6 border-t border-white/10 pt-3 text-sm text-white/45">

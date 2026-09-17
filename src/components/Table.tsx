@@ -121,24 +121,22 @@ const MELD_OFFSET = 28
 const BOX_CHROME = 62
 
 /**
- * Smallest the table may be scaled to.
+ * Bounds on the table's scale, expressed as the width a river tile ends up
+ * drawn at rather than as bare multipliers.
  *
- * Set by what a river stays countable at, not by what still fits. Below this
- * the suit of a 3p versus a 3s is a guess, and a table you cannot read is
- * worth less than one you have to scroll a little to see — fitting the screen
- * was only ever a means to reading the position. A window short enough to hit
- * this floor gets a scrollbar instead.
+ * What matters at either end is the tile, not the factor: the floor is where a
+ * 3p and a 3s stop being tellable apart, and a table you cannot read is worth
+ * less than one you have to scroll a little to see — fitting the screen was
+ * only ever a means to reading the position. The ceiling is where the bitmap
+ * art starts to look soft rather than big. Written this way the two survive a
+ * change to TILE_W, which a pair of multipliers tuned against one particular
+ * value would not.
  */
-const MIN_SCALE = 0.68
+const MIN_TILE_W = 23
+const MAX_TILE_W = 50
 
-/**
- * Largest the table may be scaled to.
- *
- * The tile art is a bitmap drawn at its native size, so past roughly half
- * again it starts to look soft rather than big. Sized to stay the right side
- * of that, which is well past what any laptop's height budget allows anyway.
- */
-const MAX_SCALE = 1.45
+const MIN_SCALE = MIN_TILE_W / TILE_W
+const MAX_SCALE = MAX_TILE_W / TILE_W
 
 /**
  * Width of one tile in your own hand, before the table's scale is applied.

@@ -4,6 +4,20 @@ import type { Meld, Pai, RiverTile } from '../lib/types'
 /** Tenhou lays the pond out six tiles to a row; the last row runs long. */
 export const ROW_LENGTH = 6
 
+/**
+ * Unscaled width of a river tile.
+ *
+ * Not the size one is drawn at, and counter-intuitively not a lever on it
+ * either: the table is laid out at this scale and then scaled as a block to
+ * the room it has, so a larger tile buys a proportionally larger footprint and
+ * a proportionally smaller scale. Raising it to 44 made the rendered tile
+ * *smaller* at every viewport — the pond grows with it, but the meld strips and
+ * nameplate gutters around it are fixed, so the square the whole thing has to
+ * fit into grows faster than the tile does.
+ *
+ * To draw bigger river tiles, give the table more room instead: the page's own
+ * chrome, or the answer column beside it.
+ */
 export const TILE_W = 34
 const ASPECT = 128 / 104
 export const TILE_H = Math.round(TILE_W * ASPECT)
