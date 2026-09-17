@@ -321,7 +321,23 @@ export default function App() {
         {mode === 'safe' && ' Which of your tiles can you cut without dealing in?'}
       </p>
 
-      <Table puzzle={puzzle} />
+      {/* Safe-tile reading answers out of your own hand, so the hand drawn
+          below the table is the input — there is no second grid repeating the
+          same tiles. Wait reading asks about all 34 tiles, most of which you do
+          not hold, so it keeps the full selector. */}
+      <Table
+        puzzle={puzzle}
+        handSelect={
+          mode === 'safe'
+            ? {
+                selected,
+                onToggle: toggle,
+                disabled: Boolean(result) || revealed,
+                answer: result || revealed ? safeTiles(puzzle) : null,
+              }
+            : null
+        }
+      />
 
       <div className="mt-4 rounded-xl border border-white/10 bg-felt-800/80 p-4">
         <div className="mb-2 flex items-center justify-between">
@@ -329,7 +345,7 @@ export default function App() {
             {result || revealed
               ? 'Answer'
               : mode === 'safe'
-                ? 'Select every tile you could discard safely'
+                ? 'Tap the tiles in your hand you could discard safely'
                 : 'Select every tile you think completes the hand'}
           </h3>
           {!result && !revealed && selected.length > 0 && (
@@ -343,17 +359,14 @@ export default function App() {
           )}
         </div>
 
-        <TileSelector
-          selected={selected}
-          onToggle={toggle}
-          disabled={Boolean(result) || revealed}
-          only={mode === 'safe' ? sortTiles(discardable(puzzle)) : null}
-          reveal={
-            result || revealed
-              ? { answer: mode === 'safe' ? safeTiles(puzzle) : puzzle.answer }
-              : null
-          }
-        />
+        {mode !== 'safe' && (
+          <TileSelector
+            selected={selected}
+            onToggle={toggle}
+            disabled={Boolean(result) || revealed}
+            reveal={result || revealed ? { answer: puzzle.answer } : null}
+          />
+        )}
 
         {result && (
           <div

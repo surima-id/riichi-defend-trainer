@@ -12,8 +12,28 @@ import {
 } from './Pond'
 import { Tile } from './Tile'
 import { TILE_W, TILE_H } from './Pond'
-import { doraFromMarker } from '../lib/tiles'
+import { doraFromMarker, normalize } from '../lib/tiles'
 import type { Meld, Pai, Puzzle, RiverTile } from '../lib/types'
+
+/**
+ * Safe-tile reading turns your own hand into the answer sheet.
+ *
+ * The question is which of *these* tiles you could cut, so the hand already
+ * drawn below the table is the natural place to answer it — a separate grid
+ * repeating the same tiles asks you to match one row against the other before
+ * you can even start reading.
+ *
+ * Selection is by tile face, not by copy: `selected` and `answer` hold
+ * normalized tiles, and every copy of a face in hand shows the same state,
+ * because safety is a property of the face rather than of the particular tile.
+ */
+export interface HandSelect {
+  selected: Pai[]
+  onToggle: (pai: Pai) => void
+  disabled: boolean
+  /** After submitting or revealing, the tiles that were actually safe. */
+  answer: Pai[] | null
+}
 
 const WINDS = ['E', 'S', 'W', 'N'] as const
 const WIND_KANJI: Record<string, string> = { E: '東', S: '南', W: '西', N: '北' }
@@ -118,7 +138,14 @@ interface SeatView {
  * rotation does not affect layout, so a rotated block in normal flow would
  * still reserve its unrotated footprint and the table would come out lopsided.
  */
-export function Table({ puzzle }: { puzzle: Puzzle }) {
+export function Table({
+  puzzle,
+  handSelect = null,
+}: {
+  puzzle: Puzzle
+  /** When set, your own hand below the table doubles as the answer input. */
+  handSelect?: HandSelect | null
+}) {
   const { target, others, round } = puzzle
 
   // Measured rather than assumed: the column width depends on the viewport, and
@@ -218,14 +245,58 @@ export function Table({ puzzle }: { puzzle: Puzzle }) {
           {/* Concealed tiles only. Your called sets are already on the table
               beside your pond, where everyone can see them; repeating them here
               would read as extra tiles still in hand. */}
-          <div className="flex flex-wrap items-end justify-center gap-px">
+          {/* The gap opens up when the hand is clickable: tiles butted together
+              read as one block to point at, and the selection outlines of two
+              adjacent copies would run into each other. */}
+          <div
+            className={[
+              'flex flex-wrap items-end justify-center',
+              handSelect ? 'gap-1.5' : 'gap-px',
+            ].join(' ')}
+          >
             {viewerHand.map((t, i) => (
-              <Tile key={i} pai={t} size="md" />
+              <HandTile key={i} pai={t} select={handSelect} />
             ))}
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * One tile of your own hand, clickable when the drill asks you to pick from it.
+ *
+ * The result colours match the ones the tile grid used: green for a safe tile
+ * you named, amber for one you missed, red for a cut that deals in, and a fade
+ * for everything already accounted for.
+ */
+function HandTile({ pai, select }: { pai: Pai; select: HandSelect | null }) {
+  if (!select) return <Tile pai={pai} size="md" />
+
+  // Red fives answer as their plain counterpart: safety is a property of the
+  // face, and a hand holding 0p and 5p offers one answer, not two.
+  const face = normalize(pai)
+  const isSel = select.selected.includes(face)
+  const answer = select.answer ? new Set(select.answer) : null
+  const isAns = answer?.has(face) ?? false
+
+  let ring = ''
+  if (answer) {
+    if (isAns && isSel) ring = 'outline outline-2 outline-offset-1 outline-emerald-500'
+    else if (isAns) ring = 'outline outline-2 outline-offset-1 outline-amber-500'
+    else if (isSel) ring = 'outline outline-2 outline-offset-1 outline-rose-500'
+    else ring = 'opacity-40'
+  }
+
+  return (
+    <Tile
+      pai={pai}
+      size="md"
+      selected={isSel && !answer}
+      onClick={select.disabled ? undefined : () => select.onToggle(face)}
+      className={ring}
+    />
   )
 }
 

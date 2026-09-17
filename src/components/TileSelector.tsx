@@ -8,12 +8,6 @@ interface TileSelectorProps {
   disabled?: boolean
   /** After submitting, mark which tiles were right and wrong. */
   reveal?: { answer: Pai[] } | null
-  /**
-   * Restrict the grid to these tiles. Safe-tile reading asks which of your own
-   * tiles you could cut, so offering all 34 would invite answers about tiles
-   * you are not holding.
-   */
-  only?: Pai[] | null
 }
 
 const GROUPS: { label: string; tiles: Pai[] }[] = [
@@ -24,16 +18,11 @@ const GROUPS: { label: string; tiles: Pai[] }[] = [
 ]
 
 export function TileSelector({
-  selected, onToggle, disabled, reveal, only,
+  selected, onToggle, disabled, reveal,
 }: TileSelectorProps) {
   const sel = new Set(selected)
   const answer = reveal ? new Set(reveal.answer.map((t) => t)) : null
-  const allowed = only ? new Set(only) : null
-
-  const groups = allowed
-    ? GROUPS.map((g) => ({ ...g, tiles: g.tiles.filter((t) => allowed.has(t)) }))
-        .filter((g) => g.tiles.length > 0)
-    : GROUPS
+  const groups = GROUPS
 
   return (
     <div className="space-y-2.5">
